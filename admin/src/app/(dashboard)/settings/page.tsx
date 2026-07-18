@@ -1,6 +1,5 @@
-import { SettingsView } from "@/features/settings/components/settings-view";
+import { SystemSettingsContainer } from "@/features/settings"
 
 export default function SettingsPage() {
-  return <SettingsView />;
+  return <SystemSettingsContainer />
 }
-

@@ -1,27 +1,26 @@
-"use client";
+"use client"
 
-import { ReactNode } from "react";
+import { ReactNode } from "react"
+import { usePathname } from "next/navigation"
 
 interface AuthLayoutProps {
-  children: ReactNode;
+  children: ReactNode
 }
 
 export function AuthLayout({ children }: AuthLayoutProps) {
+  const pathname = usePathname()
+
+  if (pathname === "/welcome") {
+    return <>{children}</>
+  }
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-secondary/30 p-4">
-      <div className="w-full max-w-md">
-        <div className="mb-8 text-center">
-          <h1 className="text-3xl font-bold tracking-tight text-primary">
-            Portal Auth
-          </h1>
-          <p className="mt-2 text-sm text-gray-500">
-            Sign in or sign up to continue
-          </p>
-        </div>
-        <div className="rounded-xl border bg-white p-6 shadow-sm">
-          {children}
-        </div>
+    <div className="min-h-screen bg-bg-base flex items-center justify-center p-4 relative overflow-hidden">
+      {/* Background radial brand glow */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-brand/8 blur-[100px] rounded-full pointer-events-none z-0" />
+      <div className="w-full flex justify-center relative z-10">
+        {children}
       </div>
     </div>
-  );
+  )
 }

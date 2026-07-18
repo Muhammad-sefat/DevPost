@@ -1,26 +1,72 @@
-@import url("https://fonts.googleapis.com/css2?family=Geist:wght@100..900&family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Raleway:ital,wght@0,100..900;1,100..900&display=swap");
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
 
 @import "tailwindcss";
 
 @custom-variant dark (&:is(.dark *));
 
 @theme {
-  /* font */
-  --font-raleway: "Raleway", sans-serif;
-  --font-poppins: "Poppins", sans-serif;
-  --font-geist: "Geist", sans-serif;
+  /* --- Fonts --- */
+  --font-display: 'Syne', sans-serif;
+  --font-body: 'Inter', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
 
-  /* color definitions */
-  --color-primary: #000000;
-  --color-secondary: #e4e4e7;
-  
-  --color-background: #ffffff;
-  --color-foreground: #000000;
-  --color-border: #e4e4e7;
+  /* --- DevPost Design Tokens --- */
+  --color-bg-base: #080B12;
+  --color-bg-surface: #0F1320;
+  --color-bg-elevated: #161B2E;
+  --color-bg-input: #1A2035;
+
+  --color-brand: #F43F5E;
+  --color-brand-hover: #E11D48;
+  --color-brand-muted: #4C1123;
+
+  --color-success: #22C55E;
+  --color-success-muted: #14532D;
+
+  --color-warning: #F59E0B;
+  --color-warning-muted: #451A03;
+
+  --color-danger: #EF4444;
+  --color-danger-muted: #450A0A;
+
+  --color-text-primary: #E8ECF4;
+  --color-text-secondary: #7B8DB0;
+  --color-text-muted: #3D4F6E;
+  --color-text-inverse: #080B12;
+
+  --color-border: #1E2A45;
+  --color-border-strong: #2D3F65;
+
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 20px;
+
+  /* --- Shadcn & Theme mapping --- */
+  --color-background: var(--color-bg-base);
+  --color-foreground: var(--color-text-primary);
+  --color-card: var(--color-bg-surface);
+  --color-card-foreground: var(--color-text-primary);
+  --color-popover: var(--color-bg-elevated);
+  --color-popover-foreground: var(--color-text-primary);
+  --color-primary: var(--color-brand);
+  --color-primary-foreground: var(--color-text-inverse);
+  --color-secondary: var(--color-bg-surface);
+  --color-secondary-foreground: var(--color-text-primary);
+  --color-muted: var(--color-bg-elevated);
+  --color-muted-foreground: var(--color-text-secondary);
+  --color-accent: var(--color-bg-input);
+  --color-accent-foreground: var(--color-text-primary);
+  --color-destructive: var(--color-danger);
+  --color-destructive-foreground: var(--color-text-inverse);
+  --color-input: var(--color-bg-input);
+  --color-ring: var(--color-brand);
 }
 
 body {
-  background-color: var(--color-background);
-  color: var(--color-foreground);
-  font-family: var(--font-raleway);
+  background-color: var(--color-bg-base);
+  color: var(--color-text-primary);
+  font-family: var(--font-body);
+  margin: 0;
+  padding: 0;
 }

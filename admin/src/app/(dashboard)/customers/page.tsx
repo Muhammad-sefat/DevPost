@@ -1,6 +1,5 @@
-import { CustomersView } from "@/features/customers/components/customers-view";
+import { UserManagementContainer } from "@/features/customers"
 
 export default function CustomersPage() {
-  return <CustomersView />;
+  return <UserManagementContainer />
 }
-

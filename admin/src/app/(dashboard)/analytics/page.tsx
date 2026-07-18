@@ -1,6 +1,5 @@
-import { AnalyticsView } from "@/features/analytics/components/analytics-view";
+import { UsageAnalyticsContainer } from "@/features/analytics"
 
 export default function AnalyticsPage() {
-  return <AnalyticsView />;
+  return <UsageAnalyticsContainer />
 }
-

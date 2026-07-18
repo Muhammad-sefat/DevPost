@@ -1,6 +1,5 @@
-import { DashboardView } from "@/features/dashboard/components/dashboard-view";
+import { AdminOverviewContainer } from "@/features/dashboard"
 
 export default function DashboardPage() {
-  return <DashboardView />;
+  return <AdminOverviewContainer />
 }
-

@@ -4,6 +4,7 @@ import { Provider } from "react-redux";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useState, type ReactNode } from "react";
 import { store } from "./index";
+import { ToastProvider } from "@/components/ui/toast";
 
 export function Providers({ children }: { children: ReactNode }) {
   // Each <Providers> mount gets its own QueryClient so tests don't
@@ -23,7 +24,7 @@ export function Providers({ children }: { children: ReactNode }) {
   return (
     <Provider store={store}>
       <QueryClientProvider client={queryClient}>
-        {children}
+        <ToastProvider>{children}</ToastProvider>
       </QueryClientProvider>
     </Provider>
   );

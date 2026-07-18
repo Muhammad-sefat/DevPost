@@ -1,31 +1,22 @@
-import type { Metadata } from "next";
-import { Inter } from "next/font/google";
-import { ReduxProvider } from "@/store/provider";
-import { QueryProvider } from "@/lib/query-client";
-import "./globals.css";
-
-const inter = Inter({ subsets: ["latin"] });
+import type { Metadata } from "next"
+import { AppProviders } from "@/providers/AppProviders"
+import "./globals.css"
 
 export const metadata: Metadata = {
-  title: {
-    default: "Your App",
-    template: "%s | Your App",
-  },
-  description: "A modern full-stack application built with Next.js",
-};
+  title: "DevPost",
+  description: "Turn your commits into LinkedIn content automatically using AI",
+}
 
 export default function RootLayout({
   children,
 }: {
-  children: React.ReactNode;
+  children: React.ReactNode
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={inter.className}>
-        <ReduxProvider>
-          <QueryProvider>{children}</QueryProvider>
-        </ReduxProvider>
+      <body className="antialiased">
+        <AppProviders>{children}</AppProviders>
       </body>
     </html>
-  );
+  )
 }

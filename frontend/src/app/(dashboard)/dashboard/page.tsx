@@ -1,5 +1,5 @@
-import { Overview } from "@/features/dashboard/components/overview";
+import { DashboardContainer } from "@/features/dashboard"
 
 export default function DashboardPage() {
-  return <Overview />;
+  return <DashboardContainer />
 }

@@ -1,5 +1,6 @@
 import { configureStore } from "@reduxjs/toolkit";
 import authReducer from "@/features/auth/store/auth.slice";
+import uiReducer from "@/store/slices/uiSlice";
 
 // Use Redux ONLY for client-side UI state (sidebar open/closed, current
 // theme, form drafts). Server data — users, posts, anything from the API —
@@ -8,6 +9,7 @@ import authReducer from "@/features/auth/store/auth.slice";
 export const store = configureStore({
   reducer: {
     auth: authReducer,
+    ui: uiReducer,
   },
 });
 

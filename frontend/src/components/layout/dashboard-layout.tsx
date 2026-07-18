@@ -1,27 +1,24 @@
-"use client";
+"use client"
 
-import { useState, type ReactNode } from "react";
-import { Sidebar } from "@/components/shared/sidebar";
-import { CommonNavbar } from "@/components/shared/common-navbar";
+import { ReactNode } from "react"
+import { Sidebar } from "./Sidebar"
 
 interface DashboardLayoutProps {
-  children: ReactNode;
+  children: ReactNode
 }
-export function DashboardLayout({ children }: DashboardLayoutProps) {
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
+export function DashboardLayout({ children }: DashboardLayoutProps) {
   return (
-    <div className="flex h-screen overflow-hidden">
-      <Sidebar
-        isCollapsed={sidebarCollapsed}
-        onToggle={() => setSidebarCollapsed((prev) => !prev)}
-      />
-      <div className="flex flex-1 flex-col overflow-hidden">
-        <CommonNavbar />
-        <main className="flex-1 overflow-y-auto bg-muted/30 p-6">
+    <div className="min-h-screen bg-bg-base text-text-primary flex flex-col md:flex-row overflow-hidden">
+      {/* Responsive Navigation */}
+      <Sidebar />
+
+      {/* Main Content Area */}
+      <div className="flex-1 flex flex-col md:pl-[240px] pb-16 md:pb-0 overflow-x-hidden min-h-screen">
+        <main className="flex-1 flex flex-col">
           {children}
         </main>
       </div>
     </div>
-  );
+  )
 }

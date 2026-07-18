@@ -1,6 +1,5 @@
-import { ServicesView } from "@/features/services/components/services-view";
+import { SystemHealthContainer } from "@/features/services"
 
 export default function ServicesPage() {
-  return <ServicesView />;
+  return <SystemHealthContainer />
 }
-
