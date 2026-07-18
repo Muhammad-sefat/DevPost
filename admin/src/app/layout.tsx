@@ -1,25 +1,22 @@
-import type { Metadata } from "next";
-import { Inter } from "next/font/google";
-import "./globals.css";
-import { Providers } from "@/store/provider";
-
-const inter = Inter({ subsets: ["latin"] });
+import type { Metadata } from "next"
+import { Providers } from "@/store/provider"
+import "./globals.css"
 
 export const metadata: Metadata = {
   title: "Admin Dashboard",
   description: "Super admin dashboard for managing the platform",
-};
+}
 
 export default function RootLayout({
   children,
 }: {
-  children: React.ReactNode;
+  children: React.ReactNode
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={inter.className}>
+      <body className="antialiased">
         <Providers>{children}</Providers>
       </body>
     </html>
-  );
+  )
 }
