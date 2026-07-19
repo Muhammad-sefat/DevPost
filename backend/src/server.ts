@@ -1,20 +1,15 @@
 import { app } from "./app";
-import { env } from "@/config/env";
 import { prisma } from "@/config/db";
+import { ENV } from "./config/env";
 
 async function startServer() {
   await prisma.$connect();
   console.log("✅ Database connected");
 
-  const server = app.listen(env.PORT, () => {
-    console.log(`🚀 API running on http://localhost:${env.PORT}`);
+  const server = app.listen(ENV.PORT, () => {
+    console.log(`🚀 API running on http://localhost:${ENV.PORT}`);
   });
 
-  // ----------------------------------------------------------------
-  // Graceful shutdown — close DB connection & HTTP server, then exit.
-  // This prevents dangling connections when you Ctrl+C or the process
-  // receives a SIGTERM (e.g. from Docker/Kubernetes/dashboard host).
-  // ----------------------------------------------------------------
   const gracefulShutdown = async (signal: string) => {
     console.log(`\n⚠️  Received ${signal}. Shutting down gracefully...`);
     server.close(async () => {
@@ -23,7 +18,6 @@ async function startServer() {
       process.exit(0);
     });
 
-    // Force exit if graceful shutdown takes longer than 10 seconds.
     setTimeout(() => {
       console.error("💥 Forced exit after timeout");
       process.exit(1);
@@ -34,12 +28,6 @@ async function startServer() {
   process.on("SIGINT", () => gracefulShutdown("SIGINT"));
 }
 
-// ----------------------------------------------------------------
-// Process-level error handlers — catch what the Express error
-// middleware can't (e.g. bugs outside request handlers).
-// Without these, an unhandled promise rejection would crash
-// the entire server silently.
-// ----------------------------------------------------------------
 process.on("unhandledRejection", (reason: unknown) => {
   console.error("❌ Unhandled Rejection:", reason);
   process.exit(1);

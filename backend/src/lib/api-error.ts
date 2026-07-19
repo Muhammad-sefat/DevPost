@@ -1,7 +1,3 @@
-// Custom error class so the global error handler can distinguish
-// "expected" errors (400 bad input, 401 unauthorized, 404 not found)
-// from genuine bugs (500). Throw this from services/controllers instead
-// of returning res.status().json() everywhere — keeps error shape consistent.
 export class ApiError extends Error {
   statusCode: number;
   isOperational: boolean;

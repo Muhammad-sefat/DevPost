@@ -1,27 +1,23 @@
-import { z } from "zod";
 import dotenv from "dotenv";
-
 dotenv.config();
 
-// Fail fast: if a required env var is missing, the server should not boot.
-// This saves you from chasing "undefined" bugs three modules deep.
-const envSchema = z.object({
-  NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
-  PORT: z.coerce.number().default(5000),
-  DATABASE_URL: z.string().min(1, "DATABASE_URL is required"),
-  JWT_ACCESS_SECRET: z.string().min(1),
-  JWT_REFRESH_SECRET: z.string().min(1),
-  JWT_ACCESS_EXPIRES_IN: z.string().default("15m"),
-  JWT_REFRESH_EXPIRES_IN: z.string().default("7d"),
-  CLIENT_URL: z.string().url(),
-  ADMIN_URL: z.string().url(),
-});
-
-const parsed = envSchema.safeParse(process.env);
-
-if (!parsed.success) {
-  console.error("❌ Invalid environment variables:", parsed.error.flatten().fieldErrors);
-  process.exit(1);
+interface EnvConfig {
+  PORT: number;
+  NODE_ENV: "development" | "production" | "test";
+  DATABASE_URL: string;
+  JWT_ACCESS_SECRET: string;
+  JWT_ACCESS_EXPIRES_IN: string;
+  JWT_REFRESH_SECRET: string;
+  JWT_REFRESH_EXPIRES_IN: string;
 }
 
-export const env = parsed.data;
+
+export const ENV: EnvConfig = {
+  PORT: parseInt(process.env.PORT || "5000", 10),
+  NODE_ENV: (process.env.NODE_ENV as "development" | "production" | "test") || "development",
+  DATABASE_URL: process.env.DATABASE_URL || "",
+  JWT_ACCESS_SECRET: process.env.JWT_ACCESS_SECRET || "",
+  JWT_ACCESS_EXPIRES_IN: process.env.JWT_ACCESS_EXPIRES_IN || "15m",
+  JWT_REFRESH_SECRET: process.env.JWT_REFRESH_SECRET || "",
+  JWT_REFRESH_EXPIRES_IN: process.env.JWT_REFRESH_EXPIRES_IN || "7d",
+};

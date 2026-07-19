@@ -1,7 +1,4 @@
 import { PrismaClient } from "@prisma/client";
-
-// Singleton pattern: prevents multiple PrismaClient instances during
-// dev hot-reload, which otherwise exhausts your DB connection pool.
 declare global {
   // eslint-disable-next-line no-var
   var prisma: PrismaClient | undefined;

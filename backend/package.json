@@ -12,15 +12,17 @@
     "lint": "eslint src --ext .ts"
   },
   "dependencies": {
-    "@prisma/client": "^5.18.0",
+    "@prisma/adapter-pg": "^7.8.0",
+    "@prisma/client": "^5.22.0",
     "bcryptjs": "^2.4.3",
     "cookie-parser": "^1.4.6",
     "cors": "^2.8.5",
-    "dotenv": "^16.4.5",
+    "dotenv": "^16.6.1",
     "express": "^4.19.2",
     "helmet": "^7.1.0",
     "jsonwebtoken": "^9.0.2",
     "morgan": "^1.10.0",
+    "pg": "^8.22.0",
     "zod": "^3.23.8"
   },
   "devDependencies": {
@@ -31,7 +33,8 @@
     "@types/jsonwebtoken": "^9.0.6",
     "@types/morgan": "^1.9.9",
     "@types/node": "^20.14.0",
-    "prisma": "^5.18.0",
+    "@types/pg": "^8.20.0",
+    "prisma": "^5.22.0",
     "tsc-alias": "^1.8.10",
     "tsx": "^4.16.0",
     "typescript": "^5.5.0"
