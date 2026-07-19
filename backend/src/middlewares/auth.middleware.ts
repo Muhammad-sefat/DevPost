@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response } from "express";
-import { catchAsync } from "@/lib/catch-async";
-import { ApiError } from "@/lib/api-error";
-import { verifyAccessToken, JwtPayload } from "@/lib/jwt";
+import { catchAsync } from "@/utils/catch-async";
+import { ApiError } from "@/utils/api-error";
+import { verifyAccessToken, JwtPayload } from "@/utils/jwt";
 
 declare global {
   namespace Express {

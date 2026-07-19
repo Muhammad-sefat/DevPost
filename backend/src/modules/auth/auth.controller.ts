@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
-import { catchAsync } from "@/lib/catch-async";
-import { ApiResponse } from "@/lib/api-response";
+import { catchAsync } from "@/utils/catch-async";
+import { ApiResponse } from "@/utils/api-response";
 import { authService } from "./auth.service";
 
 // Cookies are httpOnly + secure so the token can't be read by JS (XSS-safe),

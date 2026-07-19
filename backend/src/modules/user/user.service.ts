@@ -1,5 +1,5 @@
 import { prisma } from "@/config/db";
-import { ApiError } from "@/lib/api-error";
+import { ApiError } from "@/utils/api-error";
 
 export const userService = {
   async getMe(userId: string) {

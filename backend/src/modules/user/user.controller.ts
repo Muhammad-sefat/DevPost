@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
-import { catchAsync } from "@/lib/catch-async";
-import { ApiResponse } from "@/lib/api-response";
+import { catchAsync } from "@/utils/catch-async";
+import { ApiResponse } from "@/utils/api-response";
 import { userService } from "./user.service";
 
 export const userController = {

@@ -1,7 +1,7 @@
 import bcrypt from "bcryptjs";
 import { prisma } from "@/config/db";
-import { ApiError } from "@/lib/api-error";
-import { signAccessToken, signRefreshToken } from "@/lib/jwt";
+import { ApiError } from "@/utils/api-error";
+import { signAccessToken, signRefreshToken } from "@/utils/jwt";
 import { RegisterInput, LoginInput } from "./auth.validation";
 
 // Business logic lives here — NOT in the controller. This keeps controllers
