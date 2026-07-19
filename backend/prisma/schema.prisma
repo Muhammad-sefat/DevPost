@@ -30,7 +30,7 @@ model User {
 }
 
 model EmailVerificationToken {
-  id        String   @id @default(cuid())
+  id        String   @id @default(uuid())
 
   token     String   @unique
 
@@ -44,7 +44,7 @@ model EmailVerificationToken {
 }
 
 model PasswordResetToken {
-  id        String   @id @default(cuid())
+  id        String   @id @default(uuid())
 
   token     String   @unique
 
