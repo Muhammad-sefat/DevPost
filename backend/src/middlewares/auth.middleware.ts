@@ -1,29 +1,28 @@
 import { NextFunction, Request, Response } from "express";
-import { catchAsync } from "@/utils/catch-async";
+import { verifyAccessToken } from "@/utils/jwt";
 import { ApiError } from "@/utils/api-error";
-import { verifyAccessToken, JwtPayload } from "@/utils/jwt";
 
-declare global {
-  namespace Express {
-    interface Request {
-      user?: JwtPayload;
-    }
+export const auth = (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  const token = req.cookies?.accessToken;
+
+  if (!token) {
+    return next(new ApiError(401, "Unauthorized"));
   }
-}
-
-export const authenticate = catchAsync(async (req: Request, _res: Response, next: NextFunction) => {
-  const bearerToken = req.headers.authorization?.startsWith("Bearer ")
-    ? req.headers.authorization.split(" ")[1]
-    : undefined;
-  const token = req.cookies?.accessToken || bearerToken;
-
-  if (!token) throw ApiError.unauthorized("You are not logged in");
 
   try {
-    req.user = verifyAccessToken(token);
-  } catch {
-    throw ApiError.unauthorized("Invalid or expired token");
-  }
+    const decoded = verifyAccessToken(token) as {
+      userId: string;
+      role: "USER" | "ADMIN";
+    };
 
-  next();
-});
+    req.user = decoded;
+
+    next();
+  } catch {
+    next(new ApiError(401, "Invalid or expired token"));
+  }
+};

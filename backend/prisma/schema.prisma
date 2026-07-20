@@ -32,7 +32,7 @@ model User {
 model EmailVerificationToken {
   id        String   @id @default(uuid())
 
-  token     String   @unique
+  otp       String
 
   userId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -55,4 +55,4 @@ model PasswordResetToken {
   usedAt    DateTime?
 
   createdAt DateTime @default(now())
-}
+} 

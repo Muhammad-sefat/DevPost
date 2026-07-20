@@ -1,19 +1,33 @@
 import { z } from "zod";
 
-export const registerSchema = z.object({
-  body: z.object({
-    name: z.string().min(2, "Name must be at least 2 characters"),
-    email: z.string().email(),
-    password: z.string().min(6, "Password must be at least 6 characters"),
-  }),
+export const signupSchema = z.object({
+  name: z
+    .string()
+    .min(2, "Name must be at least 2 characters")
+    .max(50, "Name must not exceed 50 characters"),
+  email: z
+    .string()
+    .email("Invalid email format")
+    .max(100, "Email must not exceed 100 characters"),
+  password: z
+    .string()
+    .min(8, "Password must be at least 8 characters")
+    .max(32, "Password must not exceed 32 characters")
+    .regex(
+      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
+      "Password must contain at least one uppercase letter, one lowercase letter, and one number"
+    )
 });
 
-export const loginSchema = z.object({
-  body: z.object({
-    email: z.string().email(),
-    password: z.string().min(1, "Password is required"),
-  }),
+export const verifyEmailSchema = z.object({
+  email: z.string().email("Invalid email"),
+  otp: z.string().length(6, "OTP must be 6 digits"),
 });
 
-export type RegisterInput = z.infer<typeof registerSchema>["body"];
-export type LoginInput = z.infer<typeof loginSchema>["body"];
+export const signinSchema = z.object({
+  email: z.string().email(),
+  password: z.string().min(1, "Password is required"),
+});
+
+export type SignupInput = z.infer<typeof signupSchema>;
+export type SigninInput = z.infer<typeof signinSchema>;

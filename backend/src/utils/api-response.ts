@@ -1,5 +1,3 @@
-// utils/api-response.ts
-
 import { Response } from "express";
 
 export const sendResponse = <T>(

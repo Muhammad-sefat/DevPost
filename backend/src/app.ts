@@ -4,6 +4,7 @@ import morgan from "morgan";
 import cookieParser from "cookie-parser";
 import { routes } from "@/routes";
 import { ENV } from "./config/env";
+import { globalErrorHandler } from "./middlewares/global-error-handler";
 
 export const app = express();
 
@@ -23,3 +24,5 @@ app.get("/", (_req, res) => {
         message: "API is running 🚀",
     });
 });
+
+app.use(globalErrorHandler);

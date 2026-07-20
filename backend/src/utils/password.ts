@@ -2,16 +2,10 @@ import bcrypt from "bcryptjs";
 
 const SALT_ROUNDS = 10;
 
-/**
- * Hash plain password
- */
 export const hashPassword = async (password: string) => {
     return bcrypt.hash(password, SALT_ROUNDS);
 };
 
-/**
- * Compare plain password with hashed password
- */
 export const comparePassword = async (
     password: string,
     hashedPassword: string
