@@ -9,5 +9,11 @@ router.post(
     authController.verifyEmail
 );
 router.post("/signin", authController.signin);
+router.post(
+    "/refresh-token",
+    authController.refreshToken
+);
+
+router.post("/google", authController.googleSignin);
 
 export const authRoutes = router;

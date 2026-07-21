@@ -2,10 +2,13 @@ import { SigninInput, SignupInput, SignupResponse, VerifyEmailInput } from "./au
 import { ApiError } from "@/utils/api-error";
 import { prisma } from "@/config/db";
 import { comparePassword, hashPassword } from "@/utils/password";
-import { generateAccessToken, generateRefreshToken } from "@/utils/jwt";
+import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from "@/utils/jwt";
 import { generateOTP } from "@/utils/otp";
 import { sendEmail } from "@/utils/mail";
 import { emailVerificationTemplate } from "@/templates/email-verification";
+import { ENV } from "@/config/env";
+import { googleClient } from "@/utils/google";
+import { Role, Provider } from "@prisma/client";
 
 const signup = async (payload: SignupInput): Promise<SignupResponse> => {
 
@@ -179,5 +182,100 @@ const signin = async (payload: SigninInput): Promise<SignupResponse> => {
   };
 };
 
+const refreshToken = async (refreshToken: string) => {
+  if (!refreshToken) {
+    throw new ApiError(401, "Refresh token not found");
+  }
 
-export const authService = { signup, verifyEmail, signin }
+  let payload: {
+    userId: string;
+    role: Role;
+  };
+
+  try {
+    payload = verifyRefreshToken(refreshToken) as {
+      userId: string;
+      role: Role;
+    };
+  } catch {
+    throw new ApiError(401, "Invalid or expired refresh token");
+  }
+
+  const user = await prisma.user.findUnique({
+    where: {
+      id: payload.userId,
+    },
+  });
+
+  if (!user) {
+    throw new ApiError(404, "User not found");
+  }
+
+  const accessToken = generateAccessToken({
+    userId: user.id,
+    role: user.role,
+  });
+
+  return {
+    accessToken,
+  };
+};
+const googleSignin = async (idToken: string) => {
+  const ticket = await googleClient.verifyIdToken({
+    idToken,
+    audience: ENV.GOOGLE_CLIENT_ID,
+  });
+
+  const payload = ticket.getPayload();
+
+  if (!payload) {
+    throw new ApiError(401, "Invalid Google token");
+  }
+
+  const {
+    email,
+    name,
+    picture,
+    email_verified,
+  } = payload;
+
+  if (!email) {
+    throw new ApiError(400, "Google account has no email");
+  }
+
+  let user = await prisma.user.findUnique({
+    where: {
+      email,
+    },
+  });
+
+  if (!user) {
+    user = await prisma.user.create({
+      data: {
+        name: name ?? "",
+        email,
+        avatarUrl: picture,
+        emailVerified: email_verified ?? true,
+        provider: Provider.GOOGLE,
+      },
+    });
+  }
+
+  const tokenPayload = {
+    userId: user.id,
+    role: user.role,
+  };
+
+  const accessToken = generateAccessToken(tokenPayload);
+
+  const refreshToken = generateRefreshToken(tokenPayload);
+
+  return {
+    user,
+    accessToken,
+    refreshToken,
+  };
+};
+
+
+export const authService = { signup, verifyEmail, signin, refreshToken, googleSignin };

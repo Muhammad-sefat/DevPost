@@ -1,5 +1,5 @@
 import { catchAsync } from "@/utils/catch-async";
-import { signinSchema, signupSchema, verifyEmailSchema } from "./auth.validation";
+import { googlesigninSchema, signinSchema, signupSchema, verifyEmailSchema } from "./auth.validation";
 import { Request, Response } from "express";
 import { ApiError } from "@/utils/api-error";
 import { authService } from "./auth.service";
@@ -44,7 +44,6 @@ const verifyEmail = catchAsync(async (req: Request, res: Response) => {
   sendResponse(res, 200, "Email verified successfully");
 });
 
-
 const signin = catchAsync(async (req: Request, res: Response) => {
   const validationResult = signinSchema.safeParse(req.body);
 
@@ -68,4 +67,37 @@ const signin = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-export const authController = { signup, verifyEmail, signin };
+const refreshToken = catchAsync(async (req: Request, res: Response) => {
+  const refreshToken = req.cookies?.refreshToken;
+
+  const result = await authService.refreshToken(refreshToken);
+
+  setAccessTokenCookie(res, result.accessToken);
+
+  sendResponse(res, 200, "Access token refreshed successfully", {
+    accessToken: result.accessToken,
+  });
+});
+
+const googleSignin = catchAsync(async (req, res) => {
+  const validation = googlesigninSchema.safeParse(req.body);
+
+  if (!validation.success) {
+    throw new ApiError(400, validation.error.errors[0].message);
+  }
+
+  const result = await authService.googleSignin(
+    validation.data.idToken
+  );
+
+  setAccessTokenCookie(res, result.accessToken);
+  setRefreshTokenCookie(res, result.refreshToken);
+
+  sendResponse(res, 200, "Google login successful", {
+    user: result.user,
+    accessToken: result.accessToken,
+    refreshToken: result.refreshToken,
+  });
+});
+
+export const authController = { signup, verifyEmail, signin, refreshToken, googleSignin };

@@ -29,5 +29,10 @@ export const signinSchema = z.object({
   password: z.string().min(1, "Password is required"),
 });
 
+export const googlesigninSchema = z.object({
+  idToken: z.string().min(1, "Google ID Token is required"),
+});
+
 export type SignupInput = z.infer<typeof signupSchema>;
 export type SigninInput = z.infer<typeof signinSchema>;
+export type GooglesigninInput = z.infer<typeof googlesigninSchema>;

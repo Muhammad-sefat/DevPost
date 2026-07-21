@@ -12,15 +12,22 @@ enum Role {
   ADMIN
 }
 
+enum Provider {
+  CREDENTIALS
+  GOOGLE
+  GITHUB
+}
+
 
 model User {
-    id             String @id @default(uuid())
-    name           String 
-    email          String @unique
-    password       String?
-    avatarUrl      String? 
-    role           Role @default(USER)
-    emailVerified  Boolean @default(false)
+  id             String @id @default(uuid())
+  name           String 
+  email          String @unique
+  password       String?
+  avatarUrl      String? 
+  role           Role @default(USER)
+  emailVerified  Boolean @default(false)
+  provider       Provider @default(CREDENTIALS)
 
   emailVerificationTokens EmailVerificationToken[]
   passwordResetTokens      PasswordResetToken[]
