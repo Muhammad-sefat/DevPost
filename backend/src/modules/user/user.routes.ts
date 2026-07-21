@@ -5,5 +5,7 @@ import { auth } from "@/middlewares/auth.middleware";
 const router = Router();
 
 router.get("/me", auth, userController.getMe);
+router.patch("/profile", auth, userController.updateProfile);
+router.delete("/me", auth, userController.deleteAccount);
 
-export const userRoutes = router;
+export const userRoutes = router;

@@ -1,9 +1,9 @@
 import { catchAsync } from "@/utils/catch-async";
-import { githubSigninSchema, googlesigninSchema, signinSchema, signupSchema, verifyEmailSchema } from "./auth.validation";
+import { forgotPasswordSchema, githubSigninSchema, googlesigninSchema, resendForgotPasswordOtpSchema, resendVerificationOtpSchema, resetPasswordSchema, signinSchema, signupSchema, verifyEmailSchema, verifyForgotPasswordOtpSchema } from "./auth.validation";
 import { Request, Response } from "express";
 import { ApiError } from "@/utils/api-error";
 import { authService } from "./auth.service";
-import { setAccessTokenCookie, setRefreshTokenCookie } from "@/utils/cookies";
+import { clearAccessTokenCookie, clearRefreshTokenCookie, setAccessTokenCookie, setRefreshTokenCookie } from "@/utils/cookies";
 import { sendResponse } from "@/utils/api-response";
 
 
@@ -122,4 +122,89 @@ const githubSignin = catchAsync(async (req, res) => {
   });
 });
 
-export const authController = { signup, verifyEmail, signin, refreshToken, googleSignin, githubSignin };
+const logout = catchAsync(async (_req: Request, res: Response) => {
+  clearAccessTokenCookie(res);
+  clearRefreshTokenCookie(res);
+
+  sendResponse(res, 200, "Logged out successfully");
+});
+
+const resendVerificationOtp = catchAsync(async (req: Request, res: Response) => {
+  const validationResult = resendVerificationOtpSchema.safeParse(req.body);
+
+  if (!validationResult.success) {
+    const errors = validationResult.error.errors.map((err) => err.message);
+    throw new ApiError(400, errors.join(", "));
+  }
+
+  await authService.resendVerificationOtp(validationResult.data);
+
+  sendResponse(res, 200, "Verification OTP resent successfully");
+});
+
+const forgotPassword = catchAsync(async (req: Request, res: Response) => {
+  const validationResult = forgotPasswordSchema.safeParse(req.body);
+
+  if (!validationResult.success) {
+    const errors = validationResult.error.errors.map((err) => err.message);
+    throw new ApiError(400, errors.join(", "));
+  }
+
+  await authService.forgotPassword(validationResult.data);
+
+  sendResponse(res, 200, "Password reset OTP sent to email");
+});
+
+const resendForgotPasswordOtp = catchAsync(async (req: Request, res: Response) => {
+  const validationResult = resendForgotPasswordOtpSchema.safeParse(req.body);
+
+  if (!validationResult.success) {
+    const errors = validationResult.error.errors.map((err) => err.message);
+    throw new ApiError(400, errors.join(", "));
+  }
+
+  await authService.resendForgotPasswordOtp(validationResult.data);
+
+  sendResponse(res, 200, "Password reset OTP resent successfully");
+});
+
+const verifyForgotPasswordOtp = catchAsync(async (req: Request, res: Response) => {
+  const validationResult = verifyForgotPasswordOtpSchema.safeParse(req.body);
+
+  if (!validationResult.success) {
+    const errors = validationResult.error.errors.map((err) => err.message);
+    throw new ApiError(400, errors.join(", "));
+  }
+
+  await authService.verifyForgotPasswordOtp(validationResult.data);
+
+  sendResponse(res, 200, "Password reset OTP verified successfully");
+});
+
+const resetPassword = catchAsync(async (req: Request, res: Response) => {
+  const validationResult = resetPasswordSchema.safeParse(req.body);
+
+  if (!validationResult.success) {
+    const errors = validationResult.error.errors.map((err) => err.message);
+    throw new ApiError(400, errors.join(", "));
+  }
+
+  await authService.resetPassword(validationResult.data);
+
+  sendResponse(res, 200, "Password reset successfully");
+});
+
+export const authController = {
+  signup,
+  verifyEmail,
+  resendVerificationOtp,
+  signin,
+  refreshToken,
+  googleSignin,
+  githubSignin,
+  logout,
+  forgotPassword,
+  resendForgotPasswordOtp,
+  verifyForgotPasswordOtp,
+  resetPassword,
+};

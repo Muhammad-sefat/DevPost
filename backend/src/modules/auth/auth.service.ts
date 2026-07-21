@@ -1,4 +1,4 @@
-import { SigninInput, SignupInput, SignupResponse, VerifyEmailInput } from "./auth.types";
+import { ForgotPasswordInput, ResendForgotPasswordOtpInput, ResendVerificationOtpInput, ResetPasswordInput, SigninInput, SignupInput, SignupResponse, VerifyEmailInput, VerifyForgotPasswordOtpInput } from "./auth.types";
 import { ApiError } from "@/utils/api-error";
 import { prisma } from "@/config/db";
 import { comparePassword, hashPassword } from "@/utils/password";
@@ -6,6 +6,7 @@ import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from "@
 import { generateOTP } from "@/utils/otp";
 import { sendEmail } from "@/utils/mail";
 import { emailVerificationTemplate } from "@/templates/email-verification";
+import { forgotPasswordTemplate } from "@/templates/forgot-password";
 import { ENV } from "@/config/env";
 import { googleClient } from "@/utils/google";
 import { Role, Provider } from "@prisma/client";
@@ -358,5 +359,198 @@ const githubSignin = async (code: string) => {
   };
 };
 
+const resendVerificationOtp = async (payload: ResendVerificationOtpInput) => {
+  const { email } = payload;
 
-export const authService = { signup, verifyEmail, signin, refreshToken, googleSignin, githubSignin };
+  const user = await prisma.user.findUnique({
+    where: { email },
+  });
+
+  if (!user) {
+    throw new ApiError(404, "User not found");
+  }
+
+  if (user.emailVerified) {
+    throw new ApiError(400, "Email is already verified");
+  }
+
+  const otp = generateOTP();
+  const expiresAt = new Date(Date.now() + 4 * 60 * 1000);
+
+  await prisma.emailVerificationToken.create({
+    data: {
+      otp,
+      userId: user.id,
+      expiresAt,
+    },
+  });
+
+  await sendEmail(
+    user.email,
+    "Verify your email",
+    emailVerificationTemplate(user.name, otp)
+  );
+
+  return null;
+};
+
+const forgotPassword = async (payload: ForgotPasswordInput) => {
+  const { email } = payload;
+
+  const user = await prisma.user.findUnique({
+    where: { email },
+  });
+
+  if (!user) {
+    throw new ApiError(404, "User not found");
+  }
+
+  const otp = generateOTP();
+  const expiresAt = new Date(Date.now() + 4 * 60 * 1000);
+
+  await prisma.passwordResetToken.create({
+    data: {
+      token: otp,
+      userId: user.id,
+      expiresAt,
+    },
+  });
+
+  await sendEmail(
+    user.email,
+    "Reset your password",
+    forgotPasswordTemplate(user.name, otp)
+  );
+
+  return null;
+};
+
+const resendForgotPasswordOtp = async (payload: ResendForgotPasswordOtpInput) => {
+  const { email } = payload;
+
+  const user = await prisma.user.findUnique({
+    where: { email },
+  });
+
+  if (!user) {
+    throw new ApiError(404, "User not found");
+  }
+
+  const otp = generateOTP();
+  const expiresAt = new Date(Date.now() + 4 * 60 * 1000);
+
+  await prisma.passwordResetToken.create({
+    data: {
+      token: otp,
+      userId: user.id,
+      expiresAt,
+    },
+  });
+
+  await sendEmail(
+    user.email,
+    "Reset your password",
+    forgotPasswordTemplate(user.name, otp)
+  );
+
+  return null;
+};
+
+const verifyForgotPasswordOtp = async (payload: VerifyForgotPasswordOtpInput) => {
+  const { email, otp } = payload;
+
+  const user = await prisma.user.findUnique({
+    where: { email },
+  });
+
+  if (!user) {
+    throw new ApiError(404, "User not found");
+  }
+
+  const resetToken = await prisma.passwordResetToken.findFirst({
+    where: {
+      userId: user.id,
+      usedAt: null,
+    },
+    orderBy: {
+      createdAt: "desc",
+    },
+  });
+
+  if (!resetToken) {
+    throw new ApiError(400, "Password reset OTP not found");
+  }
+
+  if (resetToken.expiresAt < new Date()) {
+    throw new ApiError(400, "OTP has expired");
+  }
+
+  if (resetToken.token !== otp) {
+    throw new ApiError(400, "Invalid OTP");
+  }
+
+  return null;
+};
+
+const resetPassword = async (payload: ResetPasswordInput) => {
+  const { email, otp, newPassword } = payload;
+
+  const user = await prisma.user.findUnique({
+    where: { email },
+  });
+
+  if (!user) {
+    throw new ApiError(404, "User not found");
+  }
+
+  const resetToken = await prisma.passwordResetToken.findFirst({
+    where: {
+      userId: user.id,
+      usedAt: null,
+    },
+    orderBy: {
+      createdAt: "desc",
+    },
+  });
+
+  if (!resetToken) {
+    throw new ApiError(400, "Password reset OTP not found");
+  }
+
+  if (resetToken.expiresAt < new Date()) {
+    throw new ApiError(400, "OTP has expired");
+  }
+
+  if (resetToken.token !== otp) {
+    throw new ApiError(400, "Invalid OTP");
+  }
+
+  const hashedPassword = await hashPassword(newPassword);
+
+  await prisma.$transaction([
+    prisma.user.update({
+      where: { id: user.id },
+      data: { password: hashedPassword },
+    }),
+    prisma.passwordResetToken.update({
+      where: { id: resetToken.id },
+      data: { usedAt: new Date() },
+    }),
+  ]);
+
+  return null;
+};
+
+export const authService = {
+  signup,
+  verifyEmail,
+  resendVerificationOtp,
+  signin,
+  refreshToken,
+  googleSignin,
+  githubSignin,
+  forgotPassword,
+  resendForgotPasswordOtp,
+  verifyForgotPasswordOtp,
+  resetPassword,
+};

@@ -18,4 +18,25 @@ router.post("/google", authController.googleSignin);
 
 router.post("/github", authController.githubSignin);
 
-export const authRoutes = router;
+router.post(
+    "/resend-verification-otp",
+    authController.resendVerificationOtp
+);
+
+router.post("/logout", authController.logout);
+
+router.post("/forgot-password", authController.forgotPassword);
+
+router.post(
+    "/resend-forgot-password-otp",
+    authController.resendForgotPasswordOtp
+);
+
+router.post(
+    "/verify-forgot-password-otp",
+    authController.verifyForgotPasswordOtp
+);
+
+router.post("/reset-password", authController.resetPassword);
+
+export const authRoutes = router;
