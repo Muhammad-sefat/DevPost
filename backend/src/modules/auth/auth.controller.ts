@@ -1,5 +1,5 @@
 import { catchAsync } from "@/utils/catch-async";
-import { googlesigninSchema, signinSchema, signupSchema, verifyEmailSchema } from "./auth.validation";
+import { githubSigninSchema, googlesigninSchema, signinSchema, signupSchema, verifyEmailSchema } from "./auth.validation";
 import { Request, Response } from "express";
 import { ApiError } from "@/utils/api-error";
 import { authService } from "./auth.service";
@@ -95,9 +95,31 @@ const googleSignin = catchAsync(async (req, res) => {
 
   sendResponse(res, 200, "Google login successful", {
     user: result.user,
+  });
+});
+
+const githubSignin = catchAsync(async (req, res) => {
+  const validation = githubSigninSchema.safeParse(req.body);
+
+  if (!validation.success) {
+    throw new ApiError(
+      400,
+      validation.error.errors[0].message
+    );
+  }
+
+  const result = await authService.githubSignin(
+    validation.data.code
+  );
+
+  setAccessTokenCookie(res, result.accessToken);
+  setRefreshTokenCookie(res, result.refreshToken);
+
+  sendResponse(res, 200, "GitHub login successful", {
+    user: result.user,
     accessToken: result.accessToken,
     refreshToken: result.refreshToken,
   });
 });
 
-export const authController = { signup, verifyEmail, signin, refreshToken, googleSignin };
+export const authController = { signup, verifyEmail, signin, refreshToken, googleSignin, githubSignin };

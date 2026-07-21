@@ -9,6 +9,7 @@ import { emailVerificationTemplate } from "@/templates/email-verification";
 import { ENV } from "@/config/env";
 import { googleClient } from "@/utils/google";
 import { Role, Provider } from "@prisma/client";
+import axios from "axios";
 
 const signup = async (payload: SignupInput): Promise<SignupResponse> => {
 
@@ -277,5 +278,85 @@ const googleSignin = async (idToken: string) => {
   };
 };
 
+const githubSignin = async (code: string) => {
+  // Exchange code for access token
+  const tokenResponse = await axios.post(
+    "https://github.com/login/oauth/access_token",
+    {
+      client_id: ENV.GITHUB_CLIENT_ID,
+      client_secret: ENV.GITHUB_CLIENT_SECRET,
+      code,
+    },
+    {
+      headers: {
+        Accept: "application/json",
+      },
+    }
+  );
 
-export const authService = { signup, verifyEmail, signin, refreshToken, googleSignin };
+  const accessToken = tokenResponse.data.access_token;
+
+  if (!accessToken) {
+    throw new ApiError(401, "GitHub authentication failed");
+  }
+
+  // Get GitHub profile
+  const userResponse = await axios.get(
+    "https://api.github.com/user",
+    {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    }
+  );
+
+  // Get user's email
+  const emailResponse = await axios.get(
+    "https://api.github.com/user/emails",
+    {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    }
+  );
+
+  const primaryEmail = emailResponse.data.find(
+    (email: any) => email.primary
+  );
+
+  if (!primaryEmail) {
+    throw new ApiError(400, "GitHub email not found");
+  }
+
+  let user = await prisma.user.findUnique({
+    where: {
+      email: primaryEmail.email,
+    },
+  });
+
+  if (!user) {
+    user = await prisma.user.create({
+      data: {
+        name: userResponse.data.name || userResponse.data.login,
+        email: primaryEmail.email,
+        avatarUrl: userResponse.data.avatar_url,
+        provider: Provider.GITHUB,
+        emailVerified: primaryEmail.verified,
+      },
+    });
+  }
+
+  const jwtPayload = {
+    userId: user.id,
+    role: user.role,
+  };
+
+  return {
+    user,
+    accessToken: generateAccessToken(jwtPayload),
+    refreshToken: generateRefreshToken(jwtPayload),
+  };
+};
+
+
+export const authService = { signup, verifyEmail, signin, refreshToken, googleSignin, githubSignin };

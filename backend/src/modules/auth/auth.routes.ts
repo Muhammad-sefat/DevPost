@@ -16,4 +16,6 @@ router.post(
 
 router.post("/google", authController.googleSignin);
 
+router.post("/github", authController.githubSignin);
+
 export const authRoutes = router;
