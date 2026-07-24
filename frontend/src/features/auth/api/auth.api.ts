@@ -1,31 +1,54 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { apiClient } from "@/lib/api-client";
-import { ApiResponse, User } from "@/types";
-import { LoginFormValues } from "../schema/login.schema";
+import api from "@/lib/axios";
+import { User } from "@/store/slices/authSlice";
 
-// Pure request functions — no React here. Keeps them testable and reusable
-// outside of hooks if you ever need to (e.g. in a server action).
-const loginRequest = (payload: LoginFormValues) =>
-  apiClient.post<ApiResponse<{ accessToken: string }>>("/auth/login", payload);
-
-const meRequest = () => apiClient.get<ApiResponse<User>>("/users/me");
-
-// TanStack Query hooks — this is what components actually import.
-export function useLoginMutation() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: loginRequest,
-    onSuccess: () => {
-      // Re-fetch "me" so role-based UI updates immediately after login.
-      queryClient.invalidateQueries({ queryKey: ["me"] });
-    },
-  });
+export interface ApiResponse<T = any> {
+  success: boolean;
+  message: string;
+  data?: T;
 }
 
-export function useMeQuery() {
-  return useQuery({
-    queryKey: ["me"],
-    queryFn: async () => (await meRequest()).data.data,
-    retry: false,
-  });
+export interface SignupInput {
+  name: string;
+  email: string;
+  password: string;
 }
+
+export interface SigninInput {
+  email: string;
+  password: string;
+}
+
+export interface VerifyEmailInput {
+  email: string;
+  otp: string;
+}
+
+export const signUpApi = async (input: SignupInput): Promise<ApiResponse<{ user: User }>> => {
+  const response = await api.post("/auth/signup", input);
+  return response.data;
+};
+
+export const verifyEmailApi = async (input: VerifyEmailInput): Promise<ApiResponse> => {
+  const response = await api.post("/auth/verify-email", input);
+  return response.data;
+};
+
+export const signInApi = async (input: SigninInput): Promise<ApiResponse<{ user: User }>> => {
+  const response = await api.post("/auth/signin", input);
+  return response.data;
+};
+
+export const logoutApi = async (): Promise<ApiResponse> => {
+  const response = await api.post("/auth/logout");
+  return response.data;
+};
+
+export const getMeApi = async (): Promise<ApiResponse<User>> => {
+  const response = await api.get("/users/me");
+  return response.data;
+};
+
+export const refreshTokenApi = async (): Promise<ApiResponse<{ user: User }>> => {
+  const response = await api.post("/auth/refresh-token");
+  return response.data;
+};

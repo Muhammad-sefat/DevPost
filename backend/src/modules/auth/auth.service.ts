@@ -2,13 +2,12 @@ import { SigninInput, SignupInput, SignupResponse, VerifyEmailInput } from "./au
 import { ApiError } from "@/utils/api-error";
 import { prisma } from "@/config/db";
 import { comparePassword, hashPassword } from "@/utils/password";
-import { generateAccessToken, generateRefreshToken } from "@/utils/jwt";
+import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from "@/utils/jwt";
 import { generateOTP } from "@/utils/otp";
 import { sendEmail } from "@/utils/mail";
 import { emailVerificationTemplate } from "@/templates/email-verification";
 
 const signup = async (payload: SignupInput): Promise<SignupResponse> => {
-
   const { name, email, password } = payload;
 
   // Check if email already exists
@@ -53,12 +52,12 @@ const signup = async (payload: SignupInput): Promise<SignupResponse> => {
     "Verify your email",
     emailVerificationTemplate(user.name, otp)
   );
+
   // Generate tokens
   const tokenPayload = {
     userId: user.id,
     role: user.role,
   };
-
 
   const accessToken = generateAccessToken(tokenPayload);
   const refreshToken = generateRefreshToken(tokenPayload);
@@ -68,8 +67,8 @@ const signup = async (payload: SignupInput): Promise<SignupResponse> => {
     accessToken,
     refreshToken,
   };
+};
 
-}
 const verifyEmail = async (payload: VerifyEmailInput) => {
   const { email, otp } = payload;
 
@@ -88,16 +87,15 @@ const verifyEmail = async (payload: VerifyEmailInput) => {
   }
 
   // Find latest unused OTP
-  const verificationToken =
-    await prisma.emailVerificationToken.findFirst({
-      where: {
-        userId: user.id,
-        usedAt: null,
-      },
-      orderBy: {
-        createdAt: "desc",
-      },
-    });
+  const verificationToken = await prisma.emailVerificationToken.findFirst({
+    where: {
+      userId: user.id,
+      usedAt: null,
+    },
+    orderBy: {
+      createdAt: "desc",
+    },
+  });
 
   if (!verificationToken) {
     throw new ApiError(400, "Verification OTP not found");
@@ -162,7 +160,6 @@ const signin = async (payload: SigninInput): Promise<SignupResponse> => {
   };
 
   const accessToken = generateAccessToken(tokenPayload);
-
   const refreshToken = generateRefreshToken(tokenPayload);
 
   return {
@@ -179,5 +176,41 @@ const signin = async (payload: SigninInput): Promise<SignupResponse> => {
   };
 };
 
+const refreshToken = async (token: string) => {
+  try {
+    const decoded = verifyRefreshToken(token) as { userId: string; role: "USER" | "ADMIN" };
+    const user = await prisma.user.findUnique({
+      where: { id: decoded.userId },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        avatarUrl: true,
+        emailVerified: true,
+      },
+    });
 
-export const authService = { signup, verifyEmail, signin }
+    if (!user) {
+      throw new ApiError(401, "User not found");
+    }
+
+    const tokenPayload = {
+      userId: user.id,
+      role: user.role,
+    };
+
+    const newAccessToken = generateAccessToken(tokenPayload);
+    const newRefreshToken = generateRefreshToken(tokenPayload);
+
+    return {
+      user,
+      accessToken: newAccessToken,
+      refreshToken: newRefreshToken,
+    };
+  } catch (err) {
+    throw new ApiError(401, "Invalid refresh token");
+  }
+};
+
+export const authService = { signup, verifyEmail, signin, refreshToken };

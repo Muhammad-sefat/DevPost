@@ -9,5 +9,7 @@ router.post(
     authController.verifyEmail
 );
 router.post("/signin", authController.signin);
+router.post("/logout", authController.logout);
+router.post("/refresh-token", authController.refreshToken);
 
 export const authRoutes = router;

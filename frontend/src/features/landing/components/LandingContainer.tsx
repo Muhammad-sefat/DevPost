@@ -7,12 +7,28 @@ import gsap from "gsap"
 import { Sparkles, Terminal, Code, Cpu, ChevronRight, Github } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
+import { useAuth } from "@/hooks/use-auth"
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu"
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
+import { User as UserIcon, LayoutDashboard, LogOut } from "lucide-react"
+
 export function LandingContainer() {
   const router = useRouter()
+  const { user, isAuthenticated, logout, fetchCurrentUser } = useAuth()
   const heroRef = React.useRef<HTMLDivElement>(null)
   const stepsRef = React.useRef<HTMLDivElement>(null)
   const featuresRef = React.useRef<HTMLDivElement>(null)
   const showcaseRef = React.useRef<HTMLDivElement>(null)
+
+  React.useEffect(() => {
+    fetchCurrentUser()
+  }, [fetchCurrentUser])
 
   React.useEffect(() => {
     // 1. Welcome hero stagger animations
@@ -59,8 +75,15 @@ export function LandingContainer() {
     return () => ctx.revert()
   }, [])
 
+  const getDashboardPath = () => {
+    if (user?.role === "ADMIN" || user?.role === "SUPER_ADMIN") {
+      return "/dashboard/admin-panel"
+    }
+    return "/dashboard"
+  }
+
   return (
-    <div className="min-h-screen bg-bg-base text-text-primary overflow-x-hidden flex flex-col font-body pb-16">
+    <div className="min-h-screen bg-bg-base text-text-primary overflow-x-hidden flex flex-col font-body pb-8">
       {/* Radial Glow Gradient */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-[600px] bg-brand/5 blur-[120px] rounded-full pointer-events-none z-0" />
 
@@ -69,15 +92,54 @@ export function LandingContainer() {
         <Link href="/" className="font-display font-bold text-xl text-brand tracking-tight">
           DevPost
         </Link>
-        <Link href="/signin">
-          <Button variant="ghost" className="text-text-secondary hover:text-text-primary hover:bg-bg-elevated text-xs font-semibold px-4 py-2">
-            Sign in
-          </Button>
-        </Link>
+        {isAuthenticated && user ? (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="relative h-9 w-9 rounded-full border border-border p-0 cursor-pointer hover:bg-bg-elevated">
+                <Avatar className="h-8 w-8">
+                  {user.avatarUrl && <AvatarImage src={user.avatarUrl} alt={user.name} />}
+                  <AvatarFallback className="bg-brand/20 text-brand font-semibold text-xs uppercase">
+                    {user.name ? user.name.slice(0, 2) : <UserIcon className="h-4 w-4" />}
+                  </AvatarFallback>
+                </Avatar>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56 bg-bg-surface border-border text-text-primary p-2 space-y-1">
+              <div className="px-2 py-1.5 border-b border-border mb-1">
+                <p className="text-xs font-semibold text-text-primary truncate">{user.name}</p>
+                <p className="text-[10px] text-text-secondary truncate">{user.email}</p>
+                <span className="inline-block mt-1 px-1.5 py-0.5 text-[9px] font-mono font-bold bg-brand/10 text-brand rounded uppercase border border-brand/20">
+                  {user.role}
+                </span>
+              </div>
+              <DropdownMenuItem
+                onClick={() => router.push(getDashboardPath())}
+                className="cursor-pointer hover:bg-bg-elevated text-xs flex items-center gap-2 px-2 py-1.5 rounded"
+              >
+                <LayoutDashboard className="h-4 w-4 text-brand" />
+                <span>Dashboard</span>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator className="bg-border my-1" />
+              <DropdownMenuItem
+                onClick={logout}
+                className="cursor-pointer hover:bg-danger/20 text-danger hover:text-danger text-xs flex items-center gap-2 px-2 py-1.5 rounded"
+              >
+                <LogOut className="h-4 w-4" />
+                <span>Log out</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        ) : (
+          <Link href="/signin">
+            <Button variant="ghost" className="text-text-secondary hover:text-text-primary hover:bg-bg-elevated text-xs font-semibold px-4 py-2 cursor-pointer">
+              Sign in
+            </Button>
+          </Link>
+        )}
       </header>
 
       {/* Section 1: Hero */}
-      <section ref={heroRef} className="px-6 md:px-12 py-20 md:py-28 flex flex-col items-center text-center relative z-10 max-w-4xl mx-auto">
+      <section ref={heroRef} className="px-6 md:px-12 py-20 flex flex-col items-center text-center relative z-10 max-w-4xl mx-auto">
         <span className="hero-eyebrow font-mono text-[10px] md:text-xs font-bold tracking-widest text-brand uppercase mb-4 bg-brand/10 px-3 py-1 rounded-full border border-brand/20">
           FOR DEVELOPERS WHO SHIP DAILY
         </span>
@@ -94,9 +156,6 @@ export function LandingContainer() {
               <span>Get started free</span>
               <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
             </Button>
-          </Link>
-          <Link href="/signin" className="text-xs text-text-secondary hover:text-text-primary font-semibold hover:underline">
-            Already have an account? Sign in
           </Link>
         </div>
       </section>
@@ -199,9 +258,9 @@ export function LandingContainer() {
       </section>
 
       {/* Section 5: Footer */}
-      <footer className="mt-auto px-6 py-10 border-t border-border text-center text-xs text-text-muted">
+      <footer className="mt-auto px-6 pt-12 border-t border-border text-center text-xs text-gray-400">
         <p className="mb-2">Built by a developer, for developers.</p>
-        <p className="font-mono text-[10px]">&copy; 2026 DevPost. All rights reserved.</p>
+        <p className="font-mono text-[10px]">&copy; {new Date().getFullYear()} DevPost. All rights reserved.</p>
       </footer>
     </div>
   )

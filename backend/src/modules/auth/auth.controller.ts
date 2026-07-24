@@ -3,7 +3,7 @@ import { signinSchema, signupSchema, verifyEmailSchema } from "./auth.validation
 import { Request, Response } from "express";
 import { ApiError } from "@/utils/api-error";
 import { authService } from "./auth.service";
-import { setAccessTokenCookie, setRefreshTokenCookie } from "@/utils/cookies";
+import { setAccessTokenCookie, setRefreshTokenCookie, clearAccessTokenCookie, clearRefreshTokenCookie } from "@/utils/cookies";
 import { sendResponse } from "@/utils/api-response";
 
 
@@ -63,9 +63,31 @@ const signin = catchAsync(async (req: Request, res: Response) => {
 
   sendResponse(res, 200, "Login successful", {
     user: result.user,
-    // accessToken: result.accessToken,
-    // refreshToken: result.refreshToken,
   });
 });
 
-export const authController = { signup, verifyEmail, signin };
+const logout = catchAsync(async (_req: Request, res: Response) => {
+  clearAccessTokenCookie(res);
+  clearRefreshTokenCookie(res);
+
+  sendResponse(res, 200, "Logged out successfully");
+});
+
+const refreshToken = catchAsync(async (req: Request, res: Response) => {
+  const token = req.cookies?.refreshToken || req.headers.authorization?.replace("Bearer ", "");
+
+  if (!token) {
+    throw new ApiError(401, "Refresh token missing");
+  }
+
+  const result = await authService.refreshToken(token);
+
+  setAccessTokenCookie(res, result.accessToken);
+  setRefreshTokenCookie(res, result.refreshToken);
+
+  sendResponse(res, 200, "Token refreshed successfully", {
+    user: result.user,
+  });
+});
+
+export const authController = { signup, verifyEmail, signin, logout, refreshToken };

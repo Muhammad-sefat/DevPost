@@ -1,4 +1,4 @@
-import { VerifyEmailView } from "@/features/auth"
+import { VerifyEmailView } from "@/features/auth/components/VerifyEmailView";
 
 export default function VerifyEmailPage() {
   return <VerifyEmailView />

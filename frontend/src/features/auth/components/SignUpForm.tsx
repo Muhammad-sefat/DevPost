@@ -4,28 +4,48 @@ import * as React from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { Eye, EyeOff, Github } from "lucide-react"
+import { FaGoogle } from "react-icons/fa"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
+import { useAuth } from "@/hooks/use-auth"
+import { toast } from "sonner"
 
 export function SignUpForm() {
   const router = useRouter()
+  const { register, isLoading } = useAuth()
   const [showPassword, setShowPassword] = React.useState(false)
   const [name, setName] = React.useState("")
   const [email, setEmail] = React.useState("")
   const [password, setPassword] = React.useState("")
   const [confirmPassword, setConfirmPassword] = React.useState("")
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    // Simulated success redirect to email verification screen
-    router.push("/verify-email")
+    if (password !== confirmPassword) {
+      toast.error("Passwords do not match")
+      return
+    }
+
+    try {
+      await register({ name, email, password })
+      localStorage.setItem("pendingVerificationEmail", email)
+      router.push(`/verify-email?email=${encodeURIComponent(email)}`)
+    } catch (err) {
+      // Error handled by useAuth toast
+    }
+  }
+
+  const handleOAuthLogin = (provider: "github" | "google") => {
+    toast.info(`Redirecting to ${provider.toUpperCase()} authentication...`)
+    const backendUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1"
+    window.location.href = `${backendUrl}/auth/${provider}`
   }
 
   return (
     <Card className="w-full max-w-md bg-bg-surface border-border p-2">
       <CardHeader className="text-center space-y-1">
-        <span className="font-display font-bold text-2xl text-brand tracking-tight">DevPost</span>
+        <Link href="/" className="cursor-pointer font-display font-bold text-3xl text-brand tracking-tight">DevPost</Link>
         <CardTitle className="text-xl font-bold tracking-tight text-text-primary">Create your account</CardTitle>
         <CardDescription className="text-xs text-text-secondary">Start turning your code into content</CardDescription>
       </CardHeader>
@@ -40,6 +60,7 @@ export function SignUpForm() {
               onChange={(e) => setName(e.target.value)}
               className="bg-bg-input border-border text-text-primary text-xs h-10 rounded-lg focus:border-brand"
               required
+              disabled={isLoading}
             />
           </div>
 
@@ -52,6 +73,7 @@ export function SignUpForm() {
               onChange={(e) => setEmail(e.target.value)}
               className="bg-bg-input border-border text-text-primary text-xs h-10 rounded-lg focus:border-brand"
               required
+              disabled={isLoading}
             />
           </div>
 
@@ -65,6 +87,7 @@ export function SignUpForm() {
                 onChange={(e) => setPassword(e.target.value)}
                 className="bg-bg-input border-border text-text-primary text-xs h-10 rounded-lg pr-10 focus:border-brand"
                 required
+                disabled={isLoading}
               />
               <button
                 type="button"
@@ -85,6 +108,7 @@ export function SignUpForm() {
               onChange={(e) => setConfirmPassword(e.target.value)}
               className="bg-bg-input border-border text-text-primary text-xs h-10 rounded-lg focus:border-brand"
               required
+              disabled={isLoading}
             />
           </div>
 
@@ -94,8 +118,8 @@ export function SignUpForm() {
             <span className="text-text-secondary hover:underline cursor-pointer">Privacy Policy</span>.
           </p>
 
-          <Button type="submit" className="w-full bg-brand text-text-inverse hover:bg-brand-hover text-xs font-semibold h-10 rounded-lg mt-2">
-            Create account
+          <Button type="submit" disabled={isLoading} className="w-full bg-brand text-text-inverse hover:bg-brand-hover text-xs font-semibold h-10 rounded-lg mt-2">
+            {isLoading ? "Creating account..." : "Create account"}
           </Button>
         </form>
 
@@ -107,12 +131,22 @@ export function SignUpForm() {
         </div>
 
         <Button
-          onClick={() => router.push("/verify-email")}
+          onClick={() => handleOAuthLogin("github")}
           variant="outline"
-          className="w-full bg-bg-elevated border-border text-text-primary hover:bg-bg-input hover:text-text-primary text-xs font-semibold h-10 rounded-lg flex items-center justify-center gap-2"
+          type="button"
+          className="w-full bg-bg-elevated border-border text-text-primary hover:bg-bg-input hover:text-text-primary text-xs font-semibold h-10 rounded-lg flex items-center justify-center gap-2 cursor-pointer"
         >
           <Github className="h-4 w-4" />
           <span>Sign up with GitHub</span>
+        </Button>
+        <Button
+          onClick={() => handleOAuthLogin("google")}
+          variant="outline"
+          type="button"
+          className="w-full bg-bg-elevated border-border text-text-primary hover:bg-bg-input hover:text-text-primary text-xs font-semibold h-10 rounded-lg flex items-center justify-center gap-2 cursor-pointer"
+        >
+          <FaGoogle className="h-4 w-4" />
+          <span>Sign up with Google</span>
         </Button>
 
         <p className="text-center text-xs text-text-secondary pt-2">

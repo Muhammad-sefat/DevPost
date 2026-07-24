@@ -2,12 +2,17 @@ import express from "express";
 import helmet from "helmet";
 import morgan from "morgan";
 import cookieParser from "cookie-parser";
+import cors from "cors";
 import { routes } from "@/routes";
 import { ENV } from "./config/env";
 import { globalErrorHandler } from "./middlewares/global-error-handler";
 
 export const app = express();
 
+app.use(cors({
+  origin: process.env.FRONTEND_URL || "http://localhost:3000",
+  credentials: true,
+}));
 app.use(helmet());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));

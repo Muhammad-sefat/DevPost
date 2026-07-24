@@ -7,23 +7,46 @@ import { Eye, EyeOff, Github } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
+import { FaGoogle } from "react-icons/fa"
+import { useAuth } from "@/hooks/use-auth"
+import { toast } from "sonner"
 
 export function SignInForm() {
   const router = useRouter()
+  const { login, isLoading } = useAuth()
   const [showPassword, setShowPassword] = React.useState(false)
   const [email, setEmail] = React.useState("")
   const [password, setPassword] = React.useState("")
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    // Simulated success redirect
-    router.push("/dashboard")
+    try {
+      const user = await login({ email, password })
+      if (user) {
+        if (user.role === "ADMIN" || user.role === "SUPER_ADMIN") {
+          router.push("/dashboard/admin-panel")
+        } else {
+          router.push("/dashboard")
+        }
+      }
+    } catch (err: any) {
+      if (err.response?.status === 403 || err.response?.data?.message?.toLowerCase().includes("verify")) {
+        localStorage.setItem("pendingVerificationEmail", email)
+        router.push(`/verify-email?email=${encodeURIComponent(email)}`)
+      }
+    }
+  }
+
+  const handleOAuthLogin = (provider: "github" | "google") => {
+    toast.info(`Redirecting to ${provider.toUpperCase()} authentication...`)
+    const backendUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1"
+    window.location.href = `${backendUrl}/auth/${provider}`
   }
 
   return (
     <Card className="w-full max-w-md bg-bg-surface border-border p-2">
       <CardHeader className="text-center space-y-1">
-        <span className="font-display font-bold text-2xl text-brand tracking-tight">DevPost</span>
+        <Link href="/" className="cursor-pointer font-display font-bold text-3xl text-brand tracking-tight">DevPost</Link>
         <CardTitle className="text-xl font-bold tracking-tight text-text-primary">Welcome back</CardTitle>
         <CardDescription className="text-xs text-text-secondary">Sign in to your account</CardDescription>
       </CardHeader>
@@ -38,6 +61,7 @@ export function SignInForm() {
               onChange={(e) => setEmail(e.target.value)}
               className="bg-bg-input border-border text-text-primary text-xs h-10 rounded-lg focus:border-brand"
               required
+              disabled={isLoading}
             />
           </div>
 
@@ -56,6 +80,7 @@ export function SignInForm() {
                 onChange={(e) => setPassword(e.target.value)}
                 className="bg-bg-input border-border text-text-primary text-xs h-10 rounded-lg pr-10 focus:border-brand"
                 required
+                disabled={isLoading}
               />
               <button
                 type="button"
@@ -67,8 +92,8 @@ export function SignInForm() {
             </div>
           </div>
 
-          <Button type="submit" className="w-full bg-brand text-text-inverse hover:bg-brand-hover text-xs font-semibold h-10 rounded-lg mt-2">
-            Sign in
+          <Button type="submit" disabled={isLoading} className="w-full bg-brand text-text-inverse hover:bg-brand-hover text-xs font-semibold h-10 rounded-lg mt-2">
+            {isLoading ? "Signing in..." : "Sign in"}
           </Button>
         </form>
 
@@ -80,12 +105,22 @@ export function SignInForm() {
         </div>
 
         <Button
-          onClick={() => router.push("/dashboard")}
+          onClick={() => handleOAuthLogin("github")}
           variant="outline"
-          className="w-full bg-bg-elevated border-border text-text-primary hover:bg-bg-input hover:text-text-primary text-xs font-semibold h-10 rounded-lg flex items-center justify-center gap-2"
+          type="button"
+          className="w-full bg-bg-elevated border-border text-text-primary hover:bg-bg-input hover:text-text-primary text-xs font-semibold h-10 rounded-lg flex items-center justify-center gap-2 cursor-pointer"
         >
           <Github className="h-4 w-4" />
-          <span>Continue with GitHub</span>
+          <span>Sign in with GitHub</span>
+        </Button>
+        <Button
+          onClick={() => handleOAuthLogin("google")}
+          variant="outline"
+          type="button"
+          className="w-full bg-bg-elevated border-border text-text-primary hover:bg-bg-input hover:text-text-primary text-xs font-semibold h-10 rounded-lg flex items-center justify-center gap-2 cursor-pointer"
+        >
+          <FaGoogle className="h-4 w-4" />
+          <span>Sign in with Google</span>
         </Button>
 
         <p className="text-center text-xs text-text-secondary pt-2">
