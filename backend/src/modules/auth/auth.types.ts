@@ -30,3 +30,23 @@ export interface TokenPayload {
     userId: string;
     role: Role;
 }
+
+export interface ResendVerificationOtpInput {
+    email: string;
+}
+export interface ForgotPasswordInput {
+    email: string;
+}
+export interface ResendForgotPasswordOtpInput {
+    email: string;
+}
+export interface VerifyForgotPasswordOtpInput {
+    email: string;
+    otp: string;
+}
+export interface ResetPasswordInput {
+    email: string;
+    otp: string;
+    newPassword: string;
+    confirmPassword: string;
+}

@@ -9,6 +9,10 @@
     "esModuleInterop": true,
     "skipLibCheck": true,
     "resolveJsonModule": true,
+<<<<<<< HEAD
+=======
+    "ignoreDeprecations": "5.0",
+>>>>>>> 92fcda9961b2857ee62608d720cbcb95985182b3
     "paths": {
       "@/*": [
         "./src/*"

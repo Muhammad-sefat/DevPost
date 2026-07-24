@@ -14,6 +14,12 @@ interface EnvConfig {
   SMTP_USER: string;
   SMTP_PASS: string;
   SMTP_FROM: string;
+  GOOGLE_CLIENT_ID: string;
+  GOOGLE_CLIENT_SECRET: string;
+  GOOGLE_CALLBACK_URL: string;
+  GITHUB_CLIENT_ID: string;
+  GITHUB_CLIENT_SECRET: string;
+  GITHUB_CALLBACK_URL: string;
 }
 
 
@@ -30,4 +36,10 @@ export const ENV: EnvConfig = {
   SMTP_USER: process.env.SMTP_USER || "",
   SMTP_PASS: process.env.SMTP_PASS || "",
   SMTP_FROM: process.env.SMTP_FROM || "",
+  GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID || "",
+  GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET || "",
+  GOOGLE_CALLBACK_URL: process.env.GOOGLE_CALLBACK_URL || "",
+  GITHUB_CLIENT_ID: process.env.GITHUB_CLIENT_ID || "",
+  GITHUB_CLIENT_SECRET: process.env.GITHUB_CLIENT_SECRET || "",
+  GITHUB_CALLBACK_URL: process.env.GITHUB_CALLBACK_URL || "",
 };
