@@ -4,11 +4,12 @@ import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { Sparkles, Clock, Settings, LogOut } from "lucide-react"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { useAuth } from "@/hooks/use-auth"
 
 export function Sidebar() {
   const pathname = usePathname()
   const router = useRouter()
+  const { logout } = useAuth()
 
   const navItems = [
     { label: "Today's Posts", href: "/dashboard", icon: Sparkles },
@@ -16,7 +17,8 @@ export function Sidebar() {
     { label: "Settings", href: "/settings", icon: Settings },
   ]
 
-  const handleSignOut = () => {
+  const handleSignOut = async () => {
+    await logout()
     router.push("/signin")
   }
 
@@ -27,7 +29,7 @@ export function Sidebar() {
         <div>
           {/* Logo / Brand Name */}
           <div className="h-16 flex items-center px-6 border-b border-border">
-            <Link href="/dashboard" className="flex items-center gap-2">
+            <Link href="/" className="flex items-center gap-2">
               <span className="font-display font-bold text-xl text-brand tracking-tight">DevPost</span>
             </Link>
           </div>
@@ -59,19 +61,9 @@ export function Sidebar() {
 
         {/* Pinned User Details & Sign Out */}
         <div className="p-4 border-t border-border bg-bg-base/30 space-y-3">
-          <div className="flex items-center gap-3 px-2 py-1">
-            <Avatar className="h-9 w-9 bg-brand/20 border border-brand/30">
-              <AvatarFallback className="text-sm font-semibold text-brand font-mono">RA</AvatarFallback>
-            </Avatar>
-            <div className="min-w-0">
-              <p className="text-xs font-semibold text-text-primary truncate">Raihan Ahmed</p>
-              <p className="text-[10px] text-text-muted font-mono truncate">raihan@example.com</p>
-            </div>
-          </div>
-
           <button
             onClick={handleSignOut}
-            className="flex items-center gap-2 w-full px-3 py-2 text-xs font-medium text-danger hover:text-danger-muted hover:bg-danger/10 rounded-md transition-colors"
+            className="flex items-center gap-2 w-full px-3 py-2 text-xs font-medium text-danger hover:text-danger/80 rounded-md transition-colors cursor-pointer"
           >
             <LogOut className="h-3.5 w-3.5" />
             <span>Sign out</span>
@@ -104,7 +96,7 @@ export function Sidebar() {
 
         <button
           onClick={handleSignOut}
-          className="flex flex-col items-center gap-1 py-1 px-3 text-text-secondary hover:text-danger"
+          className="flex flex-col items-center gap-1 py-1 px-3 text-text-secondary cursor-pointer"
         >
           <LogOut className="h-5 w-5" />
           <span className="text-[10px] font-medium">Exit</span>

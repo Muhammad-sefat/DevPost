@@ -8,8 +8,6 @@ export interface User {
   createdAt: string;
 }
 
-// Mirrors the backend's ApiResponse<T> shape exactly — the axios interceptor
-// and every TanStack Query hook rely on this being consistent.
 export interface ApiResponse<T> {
   success: boolean;
   message: string;

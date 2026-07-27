@@ -14,11 +14,6 @@ interface SidebarProps {
   onToggle: () => void;
 }
 
-/**
- * Dashboard sidebar — collapsible navigation panel.
- * Filters visible links based on the logged-in user's role.
- * Shows only items the user has permission to access.
- */
 export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
   const pathname = usePathname();
   const { role, isLoading } = useRole();
@@ -102,7 +97,6 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
         })}
       </nav>
 
-      {/* Footer */}
       {!isCollapsed && (
         <div className="p-4 text-xs text-muted-foreground">
           Dashboard v1.0

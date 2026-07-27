@@ -10,7 +10,6 @@ import {
   setLoading,
   setError,
   logout as logoutAction,
-  User,
 } from "@/store/slices/authSlice";
 import {
   signInApi,
@@ -30,26 +29,29 @@ export function useAuth() {
     (state) => state.auth
   );
 
-  const login = async (input: SigninInput) => {
-    dispatch(setLoading(true));
-    dispatch(setError(null));
-    try {
-      const response = await signInApi(input);
-      if (response.data?.user) {
-        dispatch(setCredentials({ user: response.data.user }));
-        toast.success(response.message || "Signed in successfully!");
-        return response.data.user;
-      }
-    } catch (err: any) {
-      const errorMessage =
-        err.response?.data?.message || err.message || "Failed to sign in";
-      dispatch(setError(errorMessage));
-      toast.error(errorMessage);
-      throw err;
-    } finally {
-      dispatch(setLoading(false));
+ const login = async (input: SigninInput) => {
+  dispatch(setLoading(true));
+  dispatch(setError(null));
+  try {
+    const response = await signInApi(input);
+    const userData = response.data?.user;
+    if (userData) {
+      dispatch(setCredentials({ user: userData }));
+      toast.success(response.message || "Signed in successfully!");
+      return userData;
     }
-  };
+    throw new Error("Invalid response format");
+  } catch (err: any) {
+    const errorMessage =
+      err.response?.data?.message || err.message || "Failed to sign in";
+    dispatch(setError(errorMessage));
+    toast.error(errorMessage);
+    throw err;
+  } finally {
+    dispatch(setLoading(false));
+  }
+};
+
 
   const register = async (input: SignupInput) => {
     dispatch(setLoading(true));
@@ -58,9 +60,9 @@ export function useAuth() {
       const response = await signUpApi(input);
       if (response.data?.user) {
         dispatch(setCredentials({ user: response.data.user }));
-        toast.success(response.message || "Account created successfully!");
-        return response.data.user;
       }
+      toast.success(response.message || "Account created! Verification OTP sent to your email.");
+      return response;
     } catch (err: any) {
       const errorMessage =
         err.response?.data?.message || err.message || "Failed to create account";
@@ -77,6 +79,10 @@ export function useAuth() {
     dispatch(setError(null));
     try {
       const response = await verifyEmailApi(input);
+      const userData = response.data?.user || response.data;
+      if (userData && typeof userData === "object" && userData.id) {
+        dispatch(setCredentials({ user: userData }));
+      }
       toast.success(response.message || "Email verified successfully!");
       return response;
     } catch (err: any) {

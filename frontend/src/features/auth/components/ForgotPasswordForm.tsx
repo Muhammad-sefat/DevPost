@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import Link from "next/link"
-import { ArrowLeft, CheckCircle2 } from "lucide-react"
+import { ArrowLeft, CheckCircle2, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
@@ -10,10 +10,15 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 export function ForgotPasswordForm() {
   const [email, setEmail] = React.useState("")
   const [submitted, setSubmitted] = React.useState(false)
+  const [isSubmitting, setIsSubmitting] = React.useState(false)
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    setSubmitted(true)
+    setIsSubmitting(true)
+    setTimeout(() => {
+      setIsSubmitting(false)
+      setSubmitted(true)
+    }, 800)
   }
 
   return (
@@ -44,10 +49,18 @@ export function ForgotPasswordForm() {
                 onChange={(e) => setEmail(e.target.value)}
                 className="bg-bg-input border-border text-text-primary text-xs h-10 rounded-lg focus:border-brand"
                 required
+                disabled={isSubmitting}
               />
             </div>
-            <Button type="submit" className="w-full bg-brand text-text-inverse hover:bg-brand-hover text-xs font-semibold h-10 rounded-lg mt-2">
-              Send reset link
+            <Button type="submit" disabled={isSubmitting} className="w-full bg-brand text-text-inverse hover:bg-brand-hover text-xs font-semibold h-10 rounded-lg mt-2 flex items-center justify-center gap-2 cursor-pointer">
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <span>Sending reset link...</span>
+                </>
+              ) : (
+                "Send reset link"
+              )}
             </Button>
           </form>
         ) : (

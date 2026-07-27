@@ -1,12 +1,32 @@
-<<<<<<< HEAD
-import { SigninInput, SignupInput, SignupResponse, VerifyEmailInput } from "./auth.types";
+import {
+  ForgotPasswordInput,
+  ResendForgotPasswordOtpInput,
+  ResendVerificationOtpInput,
+  ResetPasswordInput,
+  SigninInput,
+  SignupInput,
+  SignupResponse,
+  VerifyEmailInput,
+  VerifyForgotPasswordOtpInput,
+} from "./auth.types";
 import { ApiError } from "@/utils/api-error";
 import { prisma } from "@/config/db";
 import { comparePassword, hashPassword } from "@/utils/password";
-import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from "@/utils/jwt";
+import {
+  generateAccessToken,
+  generateRefreshToken,
+  verifyRefreshToken,
+} from "@/utils/jwt";
 import { generateOTP } from "@/utils/otp";
 import { sendEmail } from "@/utils/mail";
 import { emailVerificationTemplate } from "@/templates/email-verification";
+import { forgotPasswordTemplate } from "@/templates/forgot-password";
+import { ENV } from "@/config/env";
+import { googleClient } from "@/utils/google";
+import { Role } from "@prisma/client";
+import { Provider } from "@prisma/client";
+
+import axios from "axios";
 
 const signup = async (payload: SignupInput): Promise<SignupResponse> => {
   const { name, email, password } = payload;
@@ -142,10 +162,7 @@ const signin = async (payload: SigninInput): Promise<SignupResponse> => {
     throw new ApiError(400, "Password not found");
   }
 
-  const isPasswordMatched = await comparePassword(
-    password,
-    user.password
-  );
+  const isPasswordMatched = await comparePassword(password, user.password);
 
   if (!isPasswordMatched) {
     throw new ApiError(400, "Invalid email or password");
@@ -178,232 +195,7 @@ const signin = async (payload: SigninInput): Promise<SignupResponse> => {
 };
 
 const refreshToken = async (token: string) => {
-  try {
-    const decoded = verifyRefreshToken(token) as { userId: string; role: "USER" | "ADMIN" };
-    const user = await prisma.user.findUnique({
-      where: { id: decoded.userId },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        role: true,
-        avatarUrl: true,
-        emailVerified: true,
-      },
-    });
-
-    if (!user) {
-      throw new ApiError(401, "User not found");
-    }
-
-    const tokenPayload = {
-      userId: user.id,
-      role: user.role,
-    };
-
-    const newAccessToken = generateAccessToken(tokenPayload);
-    const newRefreshToken = generateRefreshToken(tokenPayload);
-
-    return {
-      user,
-      accessToken: newAccessToken,
-      refreshToken: newRefreshToken,
-    };
-  } catch (err) {
-    throw new ApiError(401, "Invalid refresh token");
-  }
-};
-
-export const authService = { signup, verifyEmail, signin, refreshToken };
-=======
-import { ForgotPasswordInput, ResendForgotPasswordOtpInput, ResendVerificationOtpInput, ResetPasswordInput, SigninInput, SignupInput, SignupResponse, VerifyEmailInput, VerifyForgotPasswordOtpInput } from "./auth.types";
-import { ApiError } from "@/utils/api-error";
-import { prisma } from "@/config/db";
-import { comparePassword, hashPassword } from "@/utils/password";
-import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from "@/utils/jwt";
-import { generateOTP } from "@/utils/otp";
-import { sendEmail } from "@/utils/mail";
-import { emailVerificationTemplate } from "@/templates/email-verification";
-import { forgotPasswordTemplate } from "@/templates/forgot-password";
-import { ENV } from "@/config/env";
-import { googleClient } from "@/utils/google";
-import { Role, Provider } from "@prisma/client";
-import axios from "axios";
-
-const signup = async (payload: SignupInput): Promise<SignupResponse> => {
-
-  const { name, email, password } = payload;
-
-  // Check if email already exists
-  const existingUser = await prisma.user.findUnique({ where: { email } });
-  if (existingUser) {
-    throw new ApiError(400, "Email already exists");
-  }
-
-  // Hash password
-  const hashedPassword = await hashPassword(password);
-
-  // Create user
-  const user = await prisma.user.create({
-    data: {
-      name: name,
-      email: email,
-      password: hashedPassword,
-    },
-    select: {
-      id: true,
-      name: true,
-      email: true,
-      role: true,
-      avatarUrl: true,
-      emailVerified: true,
-    },
-  });
-
-  // Generate OTP
-  const otp = generateOTP();
-  const expiresAt = new Date(Date.now() + 4 * 60 * 1000);
-  await prisma.emailVerificationToken.create({
-    data: {
-      otp,
-      userId: user.id,
-      expiresAt,
-    },
-  });
-
-  await sendEmail(
-    user.email,
-    "Verify your email",
-    emailVerificationTemplate(user.name, otp)
-  );
-  // Generate tokens
-  const tokenPayload = {
-    userId: user.id,
-    role: user.role,
-  };
-
-
-  const accessToken = generateAccessToken(tokenPayload);
-  const refreshToken = generateRefreshToken(tokenPayload);
-
-  return {
-    user,
-    accessToken,
-    refreshToken,
-  };
-
-}
-const verifyEmail = async (payload: VerifyEmailInput) => {
-  const { email, otp } = payload;
-
-  // Find user
-  const user = await prisma.user.findUnique({
-    where: { email },
-  });
-
-  if (!user) {
-    throw new ApiError(404, "User not found");
-  }
-
-  // Already verified
-  if (user.emailVerified) {
-    throw new ApiError(400, "Email is already verified");
-  }
-
-  // Find latest unused OTP
-  const verificationToken =
-    await prisma.emailVerificationToken.findFirst({
-      where: {
-        userId: user.id,
-        usedAt: null,
-      },
-      orderBy: {
-        createdAt: "desc",
-      },
-    });
-
-  if (!verificationToken) {
-    throw new ApiError(400, "Verification OTP not found");
-  }
-
-  // Expired?
-  if (verificationToken.expiresAt < new Date()) {
-    throw new ApiError(400, "OTP has expired");
-  }
-
-  // Wrong OTP
-  if (verificationToken.otp !== otp) {
-    throw new ApiError(400, "Invalid OTP");
-  }
-
-  // Verify user
-  await prisma.$transaction([
-    prisma.user.update({
-      where: { id: user.id },
-      data: { emailVerified: true },
-    }),
-    prisma.emailVerificationToken.update({
-      where: { id: verificationToken.id },
-      data: { usedAt: new Date() },
-    }),
-  ]);
-
-  return null;
-};
-
-const signin = async (payload: SigninInput): Promise<SignupResponse> => {
-  const { email, password } = payload;
-
-  const user = await prisma.user.findUnique({
-    where: { email },
-  });
-
-  if (!user) {
-    throw new ApiError(404, "User not found");
-  }
-
-  if (!user.password) {
-    throw new ApiError(400, "Password not found");
-  }
-
-  const isPasswordMatched = await comparePassword(
-    password,
-    user.password
-  );
-
-  if (!isPasswordMatched) {
-    throw new ApiError(400, "Invalid email or password");
-  }
-
-  if (!user.emailVerified) {
-    throw new ApiError(403, "Please verify your email first");
-  }
-
-  const tokenPayload = {
-    userId: user.id,
-    role: user.role,
-  };
-
-  const accessToken = generateAccessToken(tokenPayload);
-
-  const refreshToken = generateRefreshToken(tokenPayload);
-
-  return {
-    user: {
-      id: user.id,
-      name: user.name,
-      email: user.email,
-      role: user.role,
-      avatarUrl: user.avatarUrl,
-      emailVerified: user.emailVerified,
-    },
-    accessToken,
-    refreshToken,
-  };
-};
-
-const refreshToken = async (refreshToken: string) => {
-  if (!refreshToken) {
+  if (!token) {
     throw new ApiError(401, "Refresh token not found");
   }
 
@@ -413,7 +205,7 @@ const refreshToken = async (refreshToken: string) => {
   };
 
   try {
-    payload = verifyRefreshToken(refreshToken) as {
+    payload = verifyRefreshToken(token) as {
       userId: string;
       role: Role;
     };
@@ -431,15 +223,28 @@ const refreshToken = async (refreshToken: string) => {
     throw new ApiError(404, "User not found");
   }
 
-  const accessToken = generateAccessToken({
+  const tokenPayload = {
     userId: user.id,
     role: user.role,
-  });
+  };
+
+  const accessToken = generateAccessToken(tokenPayload);
+  const newRefreshToken = generateRefreshToken(tokenPayload);
 
   return {
+    user: {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      avatarUrl: user.avatarUrl,
+      emailVerified: user.emailVerified,
+    },
     accessToken,
+    refreshToken: newRefreshToken,
   };
 };
+
 const googleSignin = async (idToken: string) => {
   const ticket = await googleClient.verifyIdToken({
     idToken,
@@ -452,12 +257,7 @@ const googleSignin = async (idToken: string) => {
     throw new ApiError(401, "Invalid Google token");
   }
 
-  const {
-    email,
-    name,
-    picture,
-    email_verified,
-  } = payload;
+  const { email, name, picture, email_verified } = payload;
 
   if (!email) {
     throw new ApiError(400, "Google account has no email");
@@ -487,11 +287,17 @@ const googleSignin = async (idToken: string) => {
   };
 
   const accessToken = generateAccessToken(tokenPayload);
-
   const refreshToken = generateRefreshToken(tokenPayload);
 
   return {
-    user,
+    user: {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      avatarUrl: user.avatarUrl,
+      emailVerified: user.emailVerified,
+    },
     accessToken,
     refreshToken,
   };
@@ -520,28 +326,20 @@ const githubSignin = async (code: string) => {
   }
 
   // Get GitHub profile
-  const userResponse = await axios.get(
-    "https://api.github.com/user",
-    {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
-    }
-  );
+  const userResponse = await axios.get("https://api.github.com/user", {
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+    },
+  });
 
   // Get user's email
-  const emailResponse = await axios.get(
-    "https://api.github.com/user/emails",
-    {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
-    }
-  );
+  const emailResponse = await axios.get("https://api.github.com/user/emails", {
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+    },
+  });
 
-  const primaryEmail = emailResponse.data.find(
-    (email: any) => email.primary
-  );
+  const primaryEmail = emailResponse.data.find((email: any) => email.primary);
 
   if (!primaryEmail) {
     throw new ApiError(400, "GitHub email not found");
@@ -570,10 +368,20 @@ const githubSignin = async (code: string) => {
     role: user.role,
   };
 
+  const newAccessToken = generateAccessToken(jwtPayload);
+  const newRefreshToken = generateRefreshToken(jwtPayload);
+
   return {
-    user,
-    accessToken: generateAccessToken(jwtPayload),
-    refreshToken: generateRefreshToken(jwtPayload),
+    user: {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      avatarUrl: user.avatarUrl,
+      emailVerified: user.emailVerified,
+    },
+    accessToken: newAccessToken,
+    refreshToken: newRefreshToken,
   };
 };
 
@@ -643,7 +451,9 @@ const forgotPassword = async (payload: ForgotPasswordInput) => {
   return null;
 };
 
-const resendForgotPasswordOtp = async (payload: ResendForgotPasswordOtpInput) => {
+const resendForgotPasswordOtp = async (
+  payload: ResendForgotPasswordOtpInput
+) => {
   const { email } = payload;
 
   const user = await prisma.user.findUnique({
@@ -674,7 +484,9 @@ const resendForgotPasswordOtp = async (payload: ResendForgotPasswordOtpInput) =>
   return null;
 };
 
-const verifyForgotPasswordOtp = async (payload: VerifyForgotPasswordOtpInput) => {
+const verifyForgotPasswordOtp = async (
+  payload: VerifyForgotPasswordOtpInput
+) => {
   const { email, otp } = payload;
 
   const user = await prisma.user.findUnique({
@@ -772,4 +584,3 @@ export const authService = {
   verifyForgotPasswordOtp,
   resetPassword,
 };
->>>>>>> 92fcda9961b2857ee62608d720cbcb95985182b3

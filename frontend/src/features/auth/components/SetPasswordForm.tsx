@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import { useRouter } from "next/navigation"
-import { CheckCircle2 } from "lucide-react"
+import { CheckCircle2, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
@@ -13,6 +13,7 @@ export function SetPasswordForm() {
   const [password, setPassword] = React.useState("")
   const [confirmPassword, setConfirmPassword] = React.useState("")
   const [submitted, setSubmitted] = React.useState(false)
+  const [isSubmitting, setIsSubmitting] = React.useState(false)
 
   const getStrength = () => {
     if (!password) return 0
@@ -28,10 +29,14 @@ export function SetPasswordForm() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    setSubmitted(true)
+    setIsSubmitting(true)
     setTimeout(() => {
-      router.push("/signin")
-    }, 2000)
+      setIsSubmitting(false)
+      setSubmitted(true)
+      setTimeout(() => {
+        router.push("/signin")
+      }, 1500)
+    }, 800)
   }
 
   return (
@@ -55,6 +60,7 @@ export function SetPasswordForm() {
                 onChange={(e) => setPassword(e.target.value)}
                 className="bg-bg-input border-border text-text-primary text-xs h-10 rounded-lg focus:border-brand"
                 required
+                disabled={isSubmitting}
               />
             </div>
 
@@ -86,11 +92,19 @@ export function SetPasswordForm() {
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 className="bg-bg-input border-border text-text-primary text-xs h-10 rounded-lg focus:border-brand"
                 required
+                disabled={isSubmitting}
               />
             </div>
 
-            <Button type="submit" className="w-full bg-brand text-text-inverse hover:bg-brand-hover text-xs font-semibold h-10 rounded-lg mt-2">
-              Set password
+            <Button type="submit" disabled={isSubmitting} className="w-full bg-brand text-text-inverse hover:bg-brand-hover text-xs font-semibold h-10 rounded-lg mt-2 flex items-center justify-center gap-2 cursor-pointer">
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <span>Setting password...</span>
+                </>
+              ) : (
+                "Set password"
+              )}
             </Button>
           </form>
         ) : (

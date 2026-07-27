@@ -3,7 +3,7 @@
 import * as React from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { Sparkles, User as UserIcon, LogOut, Settings } from "lucide-react"
+import { User as UserIcon, LogOut, Settings } from "lucide-react"
 import { useAuth } from "@/hooks/use-auth"
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 import {
