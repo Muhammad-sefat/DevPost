@@ -8,7 +8,13 @@ router.post("/verify-email", authController.verifyEmail);
 router.post("/signin", authController.signin);
 router.post("/refresh-token", authController.refreshToken);
 router.post("/google", authController.googleSignin);
+router.get("/google", authController.googleAuthRedirect);
+router.get("/google/callback", authController.googleAuthCallback);
+
 router.post("/github", authController.githubSignin);
+router.get("/github", authController.githubAuthRedirect);
+router.get("/github/callback", authController.githubAuthCallback);
+
 router.post("/resend-verification-otp", authController.resendVerificationOtp);
 router.post("/logout", authController.logout);
 router.post("/forgot-password", authController.forgotPassword);

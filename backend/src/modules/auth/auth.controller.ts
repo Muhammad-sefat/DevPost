@@ -1,4 +1,6 @@
 import { catchAsync } from "@/utils/catch-async";
+import { ENV } from "@/config/env";
+import axios from "axios";
 import {
   forgotPasswordSchema,
   githubSigninSchema,
@@ -124,6 +126,67 @@ const githubSignin = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const googleAuthRedirect = catchAsync(async (req: Request, res: Response) => {
+  const url = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${ENV.GOOGLE_CLIENT_ID}&redirect_uri=${encodeURIComponent(ENV.GOOGLE_CALLBACK_URL)}&response_type=code&scope=${encodeURIComponent("profile email")}&access_type=offline&prompt=consent`;
+  res.redirect(url);
+});
+
+const googleAuthCallback = catchAsync(async (req: Request, res: Response) => {
+  const code = req.query.code as string;
+  if (!code) {
+    return res.redirect(`${ENV.CLIENT_URL}/signin?error=${encodeURIComponent("Google authorization code missing")}`);
+  }
+
+  try {
+    const tokenResponse = await axios.post("https://oauth2.googleapis.com/token", {
+      code,
+      client_id: ENV.GOOGLE_CLIENT_ID,
+      client_secret: ENV.GOOGLE_CLIENT_SECRET,
+      redirect_uri: ENV.GOOGLE_CALLBACK_URL,
+      grant_type: "authorization_code",
+    });
+
+    const idToken = tokenResponse.data.id_token;
+    if (!idToken) {
+      throw new Error("Failed to retrieve ID token from Google");
+    }
+
+    const result = await authService.googleSignin(idToken);
+
+    setAccessTokenCookie(res, result.accessToken);
+    setRefreshTokenCookie(res, result.refreshToken);
+
+    res.redirect(`${ENV.CLIENT_URL}/dashboard`);
+  } catch (error: any) {
+    const errorMessage = error.response?.data?.error_description || error.message || "Google authentication failed";
+    res.redirect(`${ENV.CLIENT_URL}/signin?error=${encodeURIComponent(errorMessage)}`);
+  }
+});
+
+const githubAuthRedirect = catchAsync(async (req: Request, res: Response) => {
+  const url = `https://github.com/login/oauth/authorize?client_id=${ENV.GITHUB_CLIENT_ID}&redirect_uri=${encodeURIComponent(ENV.GITHUB_CALLBACK_URL)}&scope=${encodeURIComponent("user:email")}`;
+  res.redirect(url);
+});
+
+const githubAuthCallback = catchAsync(async (req: Request, res: Response) => {
+  const code = req.query.code as string;
+  if (!code) {
+    return res.redirect(`${ENV.CLIENT_URL}/signin?error=${encodeURIComponent("GitHub authorization code missing")}`);
+  }
+
+  try {
+    const result = await authService.githubSignin(code);
+
+    setAccessTokenCookie(res, result.accessToken);
+    setRefreshTokenCookie(res, result.refreshToken);
+
+    res.redirect(`${ENV.CLIENT_URL}/dashboard`);
+  } catch (error: any) {
+    const errorMessage = error.response?.data?.error_description || error.message || "GitHub authentication failed";
+    res.redirect(`${ENV.CLIENT_URL}/signin?error=${encodeURIComponent(errorMessage)}`);
+  }
+});
+
 const logout = catchAsync(async (_req: Request, res: Response) => {
   clearAccessTokenCookie(res);
   clearRefreshTokenCookie(res);
@@ -206,7 +269,11 @@ export const authController = {
   signin,
   refreshToken,
   googleSignin,
+  googleAuthRedirect,
+  googleAuthCallback,
   githubSignin,
+  githubAuthRedirect,
+  githubAuthCallback,
   logout,
   resendVerificationOtp,
   forgotPassword,

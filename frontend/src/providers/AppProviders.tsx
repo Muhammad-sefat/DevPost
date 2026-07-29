@@ -11,7 +11,7 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
     <StoreProvider>
       <QueryProvider>
         <ToastProvider>{children}</ToastProvider>
-        <Toaster position="top-right" richColors theme="dark" />
+        <Toaster position="bottom-right" richColors theme="dark" />
       </QueryProvider>
     </StoreProvider>
   );

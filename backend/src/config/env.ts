@@ -20,6 +20,7 @@ interface EnvConfig {
   GITHUB_CLIENT_ID: string;
   GITHUB_CLIENT_SECRET: string;
   GITHUB_CALLBACK_URL: string;
+  CLIENT_URL: string;
 }
 
 
@@ -42,4 +43,5 @@ export const ENV: EnvConfig = {
   GITHUB_CLIENT_ID: process.env.GITHUB_CLIENT_ID || "",
   GITHUB_CLIENT_SECRET: process.env.GITHUB_CLIENT_SECRET || "",
   GITHUB_CALLBACK_URL: process.env.GITHUB_CALLBACK_URL || "",
+  CLIENT_URL: process.env.CLIENT_URL || "http://localhost:3000",
 };
