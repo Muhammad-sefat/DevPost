@@ -63,3 +63,37 @@ model PasswordResetToken {
 
   createdAt DateTime @default(now())
 } 
+
+model GithubConnection {
+
+  id String @id @default(uuid())
+
+  userId String @unique
+
+  user User @relation(fields:[userId],references:[id],onDelete:Cascade)
+
+  githubId String
+
+  username String
+
+  accessToken String
+
+  connectedAt DateTime @default(now())
+
+  updatedAt DateTime @updatedAt
+}
+
+model WakatimeConnection {
+
+  id String @id @default(uuid())
+
+  userId String @unique
+
+  user User @relation(fields:[userId],references:[id],onDelete:Cascade)
+
+  apiKey String
+
+  connectedAt DateTime @default(now())
+
+  updatedAt DateTime @updatedAt
+}
