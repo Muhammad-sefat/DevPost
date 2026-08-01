@@ -10,17 +10,27 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Github, Clock, Bell, ShieldAlert, LogOut, User as UserIcon } from "lucide-react"
 import { useAuth } from "@/hooks/use-auth"
 import { toast } from "sonner"
+import { useSettings } from "../hooks/use-settings"
+import { Loader2 } from "lucide-react"
 
 export function SettingsContainer() {
   const { user, logout } = useAuth()
+  const {
+    connections,
+    loading: connectionsLoading,
+    actionLoading,
+    connectGithub,
+    disconnectGithub,
+    connectWakatime,
+    disconnectWakatime,
+  } = useSettings()
   
   // Profile state
   const [name, setName] = React.useState(user?.name || "Raihan Ahmed")
   
   // Connection state
-  const [githubConnected, setGithubConnected] = React.useState(true)
-  const [wakatimeConnected, setWakatimeConnected] = React.useState(false)
   const [wakaApiKey, setWakaApiKey] = React.useState("")
+  const [showWakaForm, setShowWakaForm] = React.useState(false)
   
   // Notifications state
   const [notifyEmail, setNotifyEmail] = React.useState(user?.email || "raihan@example.com")
@@ -60,6 +70,10 @@ export function SettingsContainer() {
     }
     setConfirmType(null)
   }
+
+  const githubConnected = !!connections?.github?.connected;
+  const wakatimeConnected = !!connections?.wakatime?.connected;
+  const githubUsername = connections?.github?.username;
 
   return (
     <div className="flex-1 flex flex-col min-h-screen pb-20">
@@ -139,19 +153,38 @@ export function SettingsContainer() {
                 <div className="p-2.5 bg-bg-elevated border border-border rounded-lg text-brand h-fit"><Github className="h-4 w-4" /></div>
                 <div>
                   <h4 className="text-xs font-semibold text-text-primary">GitHub Integration</h4>
-                  {githubConnected ? (
-                    <p className="text-[10px] text-success mt-0.5">Connected &middot; Active Sync</p>
+                  {connectionsLoading ? (
+                    <div className="flex items-center gap-1.5 mt-0.5 text-[10px] text-text-muted">
+                      <Loader2 className="h-3 w-3 animate-spin" />
+                      <span>Checking status...</span>
+                    </div>
+                  ) : githubConnected ? (
+                    <p className="text-[10px] text-success mt-0.5">
+                      Connected &middot; Active Sync {githubUsername ? `(@${githubUsername})` : ""}
+                    </p>
                   ) : (
                     <p className="text-[10px] text-text-muted mt-0.5">Not connected</p>
                   )}
                 </div>
               </div>
               <Button
-                onClick={() => setGithubConnected(!githubConnected)}
+                onClick={githubConnected ? disconnectGithub : connectGithub}
                 variant="outline"
-                className="bg-bg-elevated border-border text-text-primary hover:bg-bg-input text-xs font-semibold h-9 px-4 rounded-lg"
+                disabled={connectionsLoading || actionLoading.githubConnect || actionLoading.githubDisconnect}
+                className="bg-bg-elevated border-border text-text-primary hover:bg-bg-input text-xs font-semibold h-9 px-4 rounded-lg flex items-center gap-2"
               >
-                {githubConnected ? "Disconnect" : "Connect GitHub"}
+                {(actionLoading.githubConnect || actionLoading.githubDisconnect) && (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin text-text-secondary" />
+                )}
+                <span>
+                  {githubConnected
+                    ? actionLoading.githubDisconnect
+                      ? "Disconnecting..."
+                      : "Disconnect"
+                    : actionLoading.githubConnect
+                    ? "Connecting..."
+                    : "Connect GitHub"}
+                </span>
               </Button>
             </div>
 
@@ -162,7 +195,12 @@ export function SettingsContainer() {
                   <div className="p-2.5 bg-bg-elevated border border-border rounded-lg text-brand h-fit"><Clock className="h-4 w-4" /></div>
                   <div>
                     <h4 className="text-xs font-semibold text-text-primary">WakaTime Sync</h4>
-                    {wakatimeConnected ? (
+                    {connectionsLoading ? (
+                      <div className="flex items-center gap-1.5 mt-0.5 text-[10px] text-text-muted">
+                        <Loader2 className="h-3 w-3 animate-spin" />
+                        <span>Checking status...</span>
+                      </div>
+                    ) : wakatimeConnected ? (
                       <p className="text-[10px] text-success mt-0.5">Connected &middot; API Sync Active</p>
                     ) : (
                       <p className="text-[10px] text-text-muted mt-0.5">Not connected</p>
@@ -170,15 +208,31 @@ export function SettingsContainer() {
                   </div>
                 </div>
                 <Button
-                  onClick={() => setWakatimeConnected(!wakatimeConnected)}
+                  onClick={
+                    wakatimeConnected
+                      ? disconnectWakatime
+                      : () => setShowWakaForm(!showWakaForm)
+                  }
                   variant="outline"
-                  className="bg-bg-elevated border-border text-text-primary hover:bg-bg-input text-xs font-semibold h-9 px-4 rounded-lg"
+                  disabled={connectionsLoading || actionLoading.wakatimeDisconnect}
+                  className="bg-bg-elevated border-border text-text-primary hover:bg-bg-input text-xs font-semibold h-9 px-4 rounded-lg flex items-center gap-2"
                 >
-                  {wakatimeConnected ? "Disconnect" : "Connect WakaTime"}
+                  {actionLoading.wakatimeDisconnect && (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin text-text-secondary" />
+                  )}
+                  <span>
+                    {wakatimeConnected
+                      ? actionLoading.wakatimeDisconnect
+                        ? "Disconnecting..."
+                        : "Disconnect"
+                      : showWakaForm
+                      ? "Cancel"
+                      : "Connect WakaTime"}
+                  </span>
                 </Button>
               </div>
 
-              {!wakatimeConnected && (
+              {!wakatimeConnected && showWakaForm && (
                 <div className="bg-bg-input/30 p-3 rounded-lg border border-border flex flex-col sm:flex-row gap-3 items-end">
                   <div className="flex-1 space-y-1">
                     <label className="text-[10px] font-semibold text-text-secondary">WakaTime Secret API Key</label>
@@ -186,20 +240,30 @@ export function SettingsContainer() {
                       type="password"
                       placeholder="wsp_..."
                       value={wakaApiKey}
+                      disabled={actionLoading.wakatimeConnect}
                       onChange={(e) => setWakaApiKey(e.target.value)}
                       className="bg-bg-input border-border text-text-primary text-xs h-9 rounded-lg"
                     />
                   </div>
                   <Button
-                    onClick={() => {
+                    onClick={async () => {
                       if (wakaApiKey) {
-                        setWakatimeConnected(true)
-                        toast.success("WakaTime Connected! Metrics sync has been configured.")
+                        const success = await connectWakatime(wakaApiKey);
+                        if (success) {
+                          setWakaApiKey("");
+                          setShowWakaForm(false);
+                        }
+                      } else {
+                        toast.error("Please enter a WakaTime API key");
                       }
                     }}
-                    className="bg-brand text-text-inverse hover:bg-brand-hover text-xs font-semibold h-9 px-4 rounded-lg shrink-0"
+                    disabled={actionLoading.wakatimeConnect || !wakaApiKey}
+                    className="bg-brand text-text-inverse hover:bg-brand-hover text-xs font-semibold h-9 px-4 rounded-lg shrink-0 flex items-center gap-2"
                   >
-                    Save API Key
+                    {actionLoading.wakatimeConnect && (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin text-text-inverse" />
+                    )}
+                    <span>{actionLoading.wakatimeConnect ? "Saving..." : "Save API Key"}</span>
                   </Button>
                 </div>
               )}

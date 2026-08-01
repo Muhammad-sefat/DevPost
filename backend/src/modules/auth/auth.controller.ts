@@ -23,6 +23,8 @@ import {
   setRefreshTokenCookie,
 } from "@/utils/cookies";
 import { sendResponse } from "@/utils/api-response";
+import { verifyAccessToken } from "@/utils/jwt";
+import { connectionsService } from "@/modules/connections/connections.service";
 
 const signup = catchAsync(async (req: Request, res: Response) => {
   const validationResult = signupSchema.safeParse(req.body);
@@ -170,11 +172,33 @@ const githubAuthRedirect = catchAsync(async (req: Request, res: Response) => {
 
 const githubAuthCallback = catchAsync(async (req: Request, res: Response) => {
   const code = req.query.code as string;
+  const state = req.query.state as string;
+
   if (!code) {
+    if (state === "connect") {
+      return res.redirect(`${ENV.CLIENT_URL}/settings?error=${encodeURIComponent("GitHub authorization code missing")}`);
+    }
     return res.redirect(`${ENV.CLIENT_URL}/signin?error=${encodeURIComponent("GitHub authorization code missing")}`);
   }
 
   try {
+    if (state === "connect") {
+      const token = req.cookies?.accessToken;
+      if (!token) {
+        return res.redirect(`${ENV.CLIENT_URL}/signin?error=${encodeURIComponent("Unauthorized")}`);
+      }
+
+      let decoded: { userId: string; role: "USER" | "ADMIN" };
+      try {
+        decoded = verifyAccessToken(token) as { userId: string; role: "USER" | "ADMIN" };
+      } catch {
+        return res.redirect(`${ENV.CLIENT_URL}/signin?error=${encodeURIComponent("Session expired")}`);
+      }
+
+      await connectionsService.connectGithub(decoded.userId, code);
+      return res.redirect(`${ENV.CLIENT_URL}/settings?success=github`);
+    }
+
     const result = await authService.githubSignin(code);
 
     setAccessTokenCookie(res, result.accessToken);
@@ -183,6 +207,9 @@ const githubAuthCallback = catchAsync(async (req: Request, res: Response) => {
     res.redirect(`${ENV.CLIENT_URL}/dashboard`);
   } catch (error: any) {
     const errorMessage = error.response?.data?.error_description || error.message || "GitHub authentication failed";
+    if (state === "connect") {
+      return res.redirect(`${ENV.CLIENT_URL}/settings?error=${encodeURIComponent(errorMessage)}`);
+    }
     res.redirect(`${ENV.CLIENT_URL}/signin?error=${encodeURIComponent(errorMessage)}`);
   }
 });
