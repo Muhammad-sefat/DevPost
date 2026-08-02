@@ -18,31 +18,32 @@ enum Provider {
   GITHUB
 }
 
-
 model User {
-  id             String @id @default(uuid())
-  name           String 
-  email          String @unique
-  password       String?
-  avatarUrl      String? 
-  role           Role @default(USER)
-  emailVerified  Boolean @default(false)
-  provider       Provider @default(CREDENTIALS)
+  id            String   @id @default(uuid())
+  name          String
+  email         String   @unique
+  password      String?
+  avatarUrl     String?
+  role          Role     @default(USER)
+  emailVerified Boolean  @default(false)
+  provider      Provider @default(CREDENTIALS)
 
   emailVerificationTokens EmailVerificationToken[]
-  passwordResetTokens      PasswordResetToken[]
+  passwordResetTokens     PasswordResetToken[]
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  githubConnection   GithubConnection?
+  wakatimeConnection WakatimeConnection?
 }
 
 model EmailVerificationToken {
-  id        String   @id @default(uuid())
+  id String @id @default(uuid())
 
-  otp       String
+  otp String
 
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   expiresAt DateTime
   usedAt    DateTime?
@@ -51,26 +52,25 @@ model EmailVerificationToken {
 }
 
 model PasswordResetToken {
-  id        String   @id @default(uuid())
+  id String @id @default(uuid())
 
-  token     String   @unique
+  token String @unique
 
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   expiresAt DateTime
   usedAt    DateTime?
 
   createdAt DateTime @default(now())
-} 
+}
 
 model GithubConnection {
-
   id String @id @default(uuid())
 
   userId String @unique
 
-  user User @relation(fields:[userId],references:[id],onDelete:Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   githubId String
 
@@ -84,12 +84,11 @@ model GithubConnection {
 }
 
 model WakatimeConnection {
-
   id String @id @default(uuid())
 
   userId String @unique
 
-  user User @relation(fields:[userId],references:[id],onDelete:Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   apiKey String
 
