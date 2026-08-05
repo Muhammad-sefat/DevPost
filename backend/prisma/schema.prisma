@@ -1,5 +1,6 @@
 generator client {
   provider = "prisma-client-js"
+  output   = "../src/generated/client"
 }
 
 datasource db {
@@ -35,6 +36,10 @@ model User {
   updatedAt          DateTime            @updatedAt
   githubConnection   GithubConnection?
   wakatimeConnection WakatimeConnection?
+  dailyActivities    DailyActivity[]
+  posts              Post[]
+  apiUsageLogs       ApiUsageLog[]
+  notificationSettings NotificationSetting[]
 }
 
 model EmailVerificationToken {
@@ -95,4 +100,91 @@ model WakatimeConnection {
   connectedAt DateTime @default(now())
 
   updatedAt DateTime @updatedAt
+}
+
+enum PostSuggestionStatus {
+  DRAFT
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum PostStatus {
+  DRAFT
+  SCHEDULED
+  PUBLISHED
+  FAILED
+}
+
+model DailyActivity {
+  id            String   @id @default(uuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date          DateTime @default(now())
+  commits       Int      @default(0)
+  pullRequests  Int      @default(0)
+  codingMinutes Int      @default(0)
+  languages     Json     @default("{}")
+  repositories  Json     @default("[]")
+  hourlyPulse   Json     @default("{}")
+
+  suggestions   PostSuggestion[]
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([userId, date])
+}
+
+model PostSuggestion {
+  id         String               @id @default(uuid())
+  activityId String
+  activity   DailyActivity        @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  order      Int
+  title      String
+  status     PostSuggestionStatus @default(PENDING)
+  content    String
+
+  posts      Post[]
+
+  createdAt  DateTime             @default(now())
+  updatedAt  DateTime             @updatedAt
+}
+
+model Post {
+  id              String          @id @default(uuid())
+  userId          String
+  user            User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  suggestionId    String?
+  suggestion      PostSuggestion? @relation(fields: [suggestionId], references: [id], onDelete: SetNull)
+  title           String
+  content         String
+  status          PostStatus      @default(DRAFT)
+  tags            String          @default("")
+  linkedinPostUrl String?
+  postedAt        DateTime?
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+}
+
+model ApiUsageLog {
+  id         String   @id @default(uuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  provider   String
+  tokensUsed Int      @default(0)
+  cost       Decimal  @default(0.0)
+  createdAt  DateTime @default(now())
+}
+
+model NotificationSetting {
+  id             String   @id @default(uuid())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  email          String
+  channel        String
+  notifyTime     String
+  telegramChatId String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 }

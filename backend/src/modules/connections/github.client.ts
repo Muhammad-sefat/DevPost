@@ -73,6 +73,67 @@ export class GithubClient {
     });
     return response.data;
   }
+
+  async getTodayCommits(accessToken: string, username: string, dateStr: string) {
+    const response = await axios.get(
+      `https://api.github.com/search/commits?q=author:${username}+committer-date:>=${dateStr}`,
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          Accept: "application/vnd.github.cloak-preview+json",
+        },
+      }
+    );
+    return response.data;
+  }
+
+  async getTodayPullRequests(accessToken: string, username: string, dateStr: string) {
+    const response = await axios.get(
+      `https://api.github.com/search/issues?q=author:${username}+type:pr+created:>=${dateStr}`,
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          Accept: "application/vnd.github+json",
+        },
+      }
+    );
+    return response.data;
+  }
+
+  async getContributionCalendar(accessToken: string, username: string) {
+    const query = `
+      query($username: String!) {
+        user(login: $username) {
+          contributionsCollection {
+            contributionCalendar {
+              totalContributions
+              weeks {
+                contributionDays {
+                  contributionCount
+                  date
+                }
+              }
+            }
+          }
+        }
+      }
+    `;
+    const response = await axios.post(
+      "https://api.github.com/graphql",
+      {
+        query,
+        variables: { username },
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          Accept: "application/json",
+          "User-Agent": "DevPost-App",
+        },
+      }
+    );
+    return response.data;
+  }
 }
 
 export const githubClient = new GithubClient();
