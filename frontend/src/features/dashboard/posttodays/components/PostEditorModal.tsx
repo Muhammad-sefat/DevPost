@@ -5,7 +5,7 @@ import { useSelector, useDispatch } from "react-redux"
 import { RootState } from "@/store"
 import { closePostEditor } from "@/store/slices/uiSlice"
 import { useToast } from "@/components/ui/toast"
-import { MOCK_POST_IDEAS } from "../data/mock-posts"
+import { MOCK_POST_IDEAS } from "../api/mock-posts"
 import { AIRefinementChat } from "./AIRefinementChat"
 import { Dialog, DialogContent } from "@/components/ui/dialog"
 import { Badge } from "@/components/ui/badge"
@@ -67,7 +67,7 @@ export function PostEditorModal() {
 
   return (
     <Dialog open={postEditorOpen} onOpenChange={() => dispatch(closePostEditor())}>
-      <DialogContent className="max-w-4xl w-[95vw] bg-bg-surface border-border p-0 overflow-hidden rounded-xl shadow-2xl flex flex-col md:flex-row h-[90vh] md:h-[600px]">
+      <DialogContent className="max-w-4xl w-[95vw] bg-bg-surface border-border p-0 overflow-hidden rounded-xl shadow-2xl flex flex-col md:flex-row h-[90vh] md:h-[85vh] md:max-h-[600px] gap-0">
         {/* Left Side: Editor (60%) */}
         <div className="flex-1 p-5 flex flex-col justify-between overflow-y-auto">
           {/* Header */}
@@ -87,7 +87,7 @@ export function PostEditorModal() {
           {/* Text Area */}
           <div className="flex-1 flex flex-col gap-2">
             <textarea
-              className="w-full flex-1 min-h-[250px] md:min-h-[280px] bg-bg-input border border-border rounded-xl p-4 text-xs text-text-primary leading-relaxed resize-none focus:outline-none focus:border-brand"
+              className="w-full flex-1 min-h-[150px] md:min-h-[200px] bg-bg-input border border-border rounded-xl p-4 text-xs text-text-primary leading-relaxed resize-none focus:outline-none focus:border-brand"
               value={text}
               onChange={(e) => setText(e.target.value)}
               placeholder="Post content..."

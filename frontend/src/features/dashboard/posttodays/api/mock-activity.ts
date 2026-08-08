@@ -1,16 +1,4 @@
-export interface MockActivity {
-  date: string
-  github: {
-    commits: number
-    repos: string[]
-    prs: number
-  }
-  wakatime: {
-    totalMinutes: number
-    languages: Array<{ name: string; minutes: number }>
-  }
-  hourlyPulse: number[]
-}
+import { MockActivity } from "../types"
 
 export const MOCK_ACTIVITY: MockActivity = {
   date: "2025-06-14",

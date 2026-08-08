@@ -1,4 +1,4 @@
-import { SettingsContainer } from "@/features/settings"
+import { SettingsContainer } from "@/features/dashboard"
 
 export default function SettingsPage() {
   return <SettingsContainer />

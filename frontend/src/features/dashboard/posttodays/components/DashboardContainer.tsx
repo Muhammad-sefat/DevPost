@@ -1,22 +1,18 @@
 "use client"
 
 import * as React from "react"
-import { ActivitySummary } from "@/features/activity/components/ActivitySummary"
-import { ActivityPulse } from "@/features/activity/components/ActivityPulse"
-import { PostIdeaCard } from "@/features/posts/components/PostIdeaCard"
-import { MonthlyOverview } from "@/features/posts/components/MonthlyOverview"
-import { PostEditorModal } from "@/features/posts/components/PostEditorModal"
-import { MOCK_POST_IDEAS } from "@/features/posts/data/mock-posts"
-import { TopBar } from "@/components/layout/TopBar"
+import { ActivitySummary } from "./ActivitySummary"
+import { ActivityPulse } from "./ActivityPulse"
+import { PostIdeaCard } from "./PostIdeaCard"
+import { MonthlyOverview } from "./MonthlyOverview"
+import { PostEditorModal } from "./PostEditorModal"
+import { MOCK_POST_IDEAS } from "../api/mock-posts"
 
 export function DashboardContainer() {
   const posts = MOCK_POST_IDEAS
 
   return (
     <div className="flex-1 flex flex-col min-h-screen pb-20">
-      {/* Top Header */}
-      <TopBar title="Today's Posts" subtitle="Monday, June 14 · Based on your activity" />
-
       {/* Scrollable Layout Container */}
       <div className="flex-1 p-6 md:p-8 space-y-8 max-w-6xl w-full mx-auto">
         {/* Row 1: Activity summary */}

@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import gsap from "gsap"
-import { MOCK_ACTIVITY } from "../data/mock-activity"
+import { MOCK_ACTIVITY } from "../api/mock-activity"
 import { Card, CardContent } from "@/components/ui/card"
 
 export function ActivityPulse() {

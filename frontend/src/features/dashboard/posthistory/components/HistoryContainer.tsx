@@ -2,12 +2,11 @@
 
 import * as React from "react"
 import { useRouter } from "next/navigation"
-import { MOCK_HISTORY } from "../data/mock-posts"
-import { TopBar } from "@/components/layout/TopBar"
+import { MOCK_HISTORY } from "../api/mock-posts"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
 import { EmptyState } from "@/components/shared/EmptyState"
-import { Clock, Calendar, ArrowRight, Filter } from "lucide-react"
+import { Clock, Filter } from "lucide-react"
 
 export function HistoryContainer() {
   const router = useRouter()
@@ -32,8 +31,6 @@ export function HistoryContainer() {
 
   return (
     <div className="flex-1 flex flex-col min-h-screen pb-20">
-      <TopBar title="Post History" subtitle="Review your generated post history and drafts" />
-
       <div className="flex-1 p-6 md:p-8 space-y-6 max-w-6xl w-full mx-auto font-body">
         {/* Stats Bar */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 bg-bg-surface border border-border p-4 rounded-xl font-mono text-center">

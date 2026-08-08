@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import { Github, Clock } from "lucide-react"
-import { MOCK_ACTIVITY } from "../data/mock-activity"
+import { MOCK_ACTIVITY } from "../api/mock-activity"
 import { Card, CardContent } from "@/components/ui/card"
 
 export function ActivitySummary() {

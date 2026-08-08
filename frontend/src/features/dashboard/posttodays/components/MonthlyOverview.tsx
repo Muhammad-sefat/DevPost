@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { MOCK_MONTHLY } from "../data/mock-posts"
+import { MOCK_MONTHLY } from "../api/mock-posts"
 import { Card, CardContent } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
 

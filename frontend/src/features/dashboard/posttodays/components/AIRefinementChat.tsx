@@ -70,7 +70,7 @@ export function AIRefinementChat() {
   }, [messages, isTyping])
 
   return (
-    <div className="flex flex-col h-[400px] md:h-full justify-between bg-bg-surface/50 border-l border-border md:w-[320px] shrink-0 font-body">
+    <div className="flex flex-col h-[45%] md:h-full justify-between bg-bg-surface/50 border-t md:border-t-0 border-l-0 md:border-l border-border md:w-[320px] shrink-0 font-body">
       {/* Header */}
       <div className="p-4 border-b border-border flex items-center gap-2">
         <Sparkles className="h-4 w-4 text-brand animate-pulse" />
