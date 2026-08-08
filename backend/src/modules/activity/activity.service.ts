@@ -12,6 +12,8 @@ const getActivityForDate = async (userId: string, dateStr: string) => {
   let commitsCount = 0;
   let prsCount = 0;
   let repositories: string[] = [];
+  let commitMessagesList: string[] = [];
+  let commitDetailsList: any[] = [];
 
   // 2. Fetch GitHub data if connected
   if (githubConn) {
@@ -24,6 +26,46 @@ const getActivityForDate = async (userId: string, dateStr: string) => {
 
       commitsCount = commitsData.total_count || 0;
       prsCount = prsData.total_count || 0;
+
+      const commitItems = Array.isArray(commitsData.items) ? commitsData.items : [];
+      
+      // Concurrently fetch rich metadata for each commit (SHA, files modified, additions/deletions, patch)
+      const commitDetailsPromises = commitItems.map(async (item: any) => {
+        const sha = item.sha;
+        const repoName = item.repository?.name;
+        const repoOwner = item.repository?.owner?.login;
+        if (sha && repoName && repoOwner) {
+          try {
+            const detail = await githubClient.getCommitDetails(githubConn.accessToken, repoOwner, repoName, sha);
+            
+            const files = Array.isArray(detail.files)
+              ? detail.files.map((f: any) => ({
+                  filename: f.filename,
+                  additions: f.additions || 0,
+                  deletions: f.deletions || 0,
+                  patch: f.patch || "",
+                }))
+              : [];
+
+            return {
+              sha,
+              message: detail.commit?.message || item.commit?.message || "",
+              repo: repoName,
+              additions: detail.stats?.additions || 0,
+              deletions: detail.stats?.deletions || 0,
+              files,
+            };
+          } catch (e: any) {
+            console.error(`Failed to fetch details for commit ${sha}:`, e.message);
+            return null;
+          }
+        }
+        return null;
+      });
+
+      const resolvedDetails = await Promise.all(commitDetailsPromises);
+      commitDetailsList = resolvedDetails.filter(Boolean);
+      commitMessagesList = commitDetailsList.map((c) => c.message);
 
       if (Array.isArray(repos)) {
         repositories = repos
@@ -74,6 +116,8 @@ const getActivityForDate = async (userId: string, dateStr: string) => {
       codingMinutes,
       languages,
       repositories,
+      commitMessages: commitMessagesList,
+      commitDetails: commitDetailsList,
     },
     create: {
       userId,
@@ -83,6 +127,8 @@ const getActivityForDate = async (userId: string, dateStr: string) => {
       codingMinutes,
       languages,
       repositories,
+      commitMessages: commitMessagesList,
+      commitDetails: commitDetailsList,
       hourlyPulse: {},
     },
   });
@@ -94,6 +140,8 @@ const getActivityForDate = async (userId: string, dateStr: string) => {
     codingMinutes: activity.codingMinutes,
     repositories: activity.repositories as string[],
     languages: activity.languages as Record<string, number>,
+    commitMessages: activity.commitMessages as string[],
+    commitDetails: activity.commitDetails as any[],
   };
 };
 
@@ -122,6 +170,8 @@ const getMonthlyActivity = async (userId: string, year: number, month: number) =
     codingMinutes: activity.codingMinutes,
     repositories: activity.repositories as string[],
     languages: activity.languages as Record<string, number>,
+    commitMessages: activity.commitMessages as string[],
+    commitDetails: activity.commitDetails as any[],
   }));
 };
 

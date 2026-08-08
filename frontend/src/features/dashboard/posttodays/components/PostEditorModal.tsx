@@ -5,20 +5,21 @@ import { useSelector, useDispatch } from "react-redux"
 import { RootState } from "@/store"
 import { closePostEditor } from "@/store/slices/uiSlice"
 import { useToast } from "@/components/ui/toast"
-import { MOCK_POST_IDEAS } from "../api/mock-posts"
 import { AIRefinementChat } from "./AIRefinementChat"
 import { Dialog, DialogContent } from "@/components/ui/dialog"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { X, Copy, Check } from "lucide-react"
+import { useTodaySuggestions } from "../hooks"
 
 export function PostEditorModal() {
   const dispatch = useDispatch()
   const { toast } = useToast()
   const { postEditorOpen, selectedPostId } = useSelector((state: RootState) => state.ui)
+  const { suggestions } = useTodaySuggestions()
   
   // Find current post text
-  const currentPost = MOCK_POST_IDEAS.find((p) => p.id === selectedPostId)
+  const currentPost = suggestions.find((p) => p.id === selectedPostId)
 
   const [text, setText] = React.useState("")
   const [tags, setTags] = React.useState<string[]>([])
@@ -27,8 +28,8 @@ export function PostEditorModal() {
 
   React.useEffect(() => {
     if (currentPost) {
-      setText(currentPost.text)
-      setTags(currentPost.tags)
+      setText(currentPost.content)
+      setTags([currentPost.title])
     }
   }, [currentPost, postEditorOpen])
 

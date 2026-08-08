@@ -119,7 +119,7 @@ export function SettingsContainer() {
 
   return (
     <div className="flex-1 flex flex-col min-h-screen pb-20">
-      <div className="flex-1 p-6 md:p-8 space-y-6 max-w-4xl w-full mx-auto font-body">
+      <div className="flex-1 p-6 md:p-8 space-y-6 font-body">
         {/* Profile Card */}
         <Card className="bg-bg-surface border-border p-2">
           <CardHeader>

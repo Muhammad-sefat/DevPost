@@ -127,6 +127,8 @@ model DailyActivity {
   languages     Json     @default("{}")
   repositories  Json     @default("[]")
   hourlyPulse   Json     @default("{}")
+  commitMessages Json     @default("[]")
+  commitDetails  Json     @default("[]")
 
   suggestions   PostSuggestion[]
 

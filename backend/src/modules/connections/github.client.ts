@@ -134,6 +134,16 @@ export class GithubClient {
     );
     return response.data;
   }
+
+  async getCommitDetails(accessToken: string, owner: string, repo: string, sha: string) {
+    const response = await axios.get(`https://api.github.com/repos/${owner}/${repo}/commits/${sha}`, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        Accept: "application/vnd.github+json",
+      },
+    });
+    return response.data;
+  }
 }
 
 export const githubClient = new GithubClient();

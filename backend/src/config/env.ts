@@ -21,6 +21,7 @@ interface EnvConfig {
   GITHUB_CLIENT_SECRET: string;
   GITHUB_CALLBACK_URL: string;
   CLIENT_URL: string;
+  OPENROUTER_API_KEY: string;
 }
 
 
@@ -44,4 +45,5 @@ export const ENV: EnvConfig = {
   GITHUB_CLIENT_SECRET: process.env.GITHUB_CLIENT_SECRET || "",
   GITHUB_CALLBACK_URL: process.env.GITHUB_CALLBACK_URL || "",
   CLIENT_URL: process.env.CLIENT_URL || "http://localhost:3000",
+  OPENROUTER_API_KEY: process.env.OPENROUTER_API_KEY || "",
 };

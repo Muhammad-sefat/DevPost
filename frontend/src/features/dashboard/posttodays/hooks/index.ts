@@ -1,2 +1,2 @@
-// Hooks exports for posttodays feature
-export {}
+export * from "./use-today-activity"
+export * from "./use-today-suggestions"

@@ -24,3 +24,11 @@ export interface MockActivity {
   }
   hourlyPulse: number[]
 }
+
+export interface TodayActivity {
+  commits: number
+  pullRequests: number
+  codingMinutes: number
+  repositories: string[]
+  languages: Record<string, number>
+}
