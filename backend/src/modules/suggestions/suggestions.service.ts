@@ -1,7 +1,7 @@
 import { prisma } from "@/config/db";
 import { activityService } from "@/modules/activity/activity.service";
-import { openRouterClient } from "@/modules/ai/openrouter.client";
-import { promptService } from "@/modules/ai/prompt.service";
+import { openRouterClient } from "@/config/openrouter.client";
+import { promptService } from "@/config/prompt.service";
 
 const getSuggestionsForDate = async (userId: string, dateStr: string, regenerate = false) => {
   const targetDate = new Date(`${dateStr}T00:00:00.000Z`);
@@ -18,7 +18,7 @@ const getSuggestionsForDate = async (userId: string, dateStr: string, regenerate
 
   if (!activity) {
     // If no activity is stored yet, trigger sync to create it
-    const syncedActivity = await activityService.getActivityForDate(userId, dateStr);
+    await activityService.getActivityForDate(userId, dateStr);
     activity = await prisma.dailyActivity.findUnique({
       where: {
         userId_date: {
@@ -47,7 +47,13 @@ const getSuggestionsForDate = async (userId: string, dateStr: string, regenerate
     return existingSuggestions;
   }
 
-  // 3. If regenerating, delete existing suggestions first
+  // 3. Generate suggestion prompt using today's activity stats
+  const prompt = promptService.buildSuggestionPrompt(activity);
+
+  // 4. Query OpenRouter (throws on failure so existing suggestions are kept)
+  const aiSuggestions = await openRouterClient.generateSuggestions(prompt);
+
+  // 5. Delete old suggestions only after new ones are successfully generated
   if (existingSuggestions.length > 0 && regenerate) {
     await prisma.postSuggestion.deleteMany({
       where: {
@@ -55,12 +61,6 @@ const getSuggestionsForDate = async (userId: string, dateStr: string, regenerate
       },
     });
   }
-
-  // 4. Generate suggestion prompt using today's activity stats
-  const prompt = promptService.buildSuggestionPrompt(activity);
-
-  // 5. Query OpenRouter
-  const aiSuggestions = await openRouterClient.generateSuggestions(prompt);
 
   // 6. Save new suggestions to the database
   const createdSuggestions = await Promise.all(

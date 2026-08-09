@@ -10,7 +10,7 @@ import { useTodayActivity, useTodaySuggestions } from "../hooks"
 
 export function DashboardContainer() {
   const { activity, loading } = useTodayActivity()
-  const { suggestions, loading: suggestionsLoading, refetch: refetchSuggestions } = useTodaySuggestions()
+  const { suggestions, loading: suggestionsLoading, error: suggestionsError, refetch: refetchSuggestions } = useTodaySuggestions()
 
   return (
     <div className="flex-1 flex flex-col min-h-screen pb-20">
@@ -62,17 +62,22 @@ export function DashboardContainer() {
                   </div>
                 </div>
               ))
-            ) : suggestions.length === 0 ? (
+            ) : (!suggestions || suggestions.length === 0) ? (
               <div className="col-span-full border border-dashed border-border rounded-xl p-8 bg-bg-surface/50 text-center space-y-4">
                 <div>
-                  <h4 className="text-sm font-semibold text-text-primary">No post suggestions ready yet</h4>
+                  <h4 className="text-sm font-semibold text-text-primary">
+                    {suggestionsError ? "Couldn't generate post suggestions" : "No post suggestions available yet"}
+                  </h4>
                   <p className="text-xs text-text-secondary mt-1">
-                    Connect GitHub or WakaTime and push your first commits today to generate ideas.
+                    {suggestionsError
+                      ? suggestionsError
+                      : "Connect GitHub or WakaTime and push your first commits today to generate ideas. Posts are also generated automatically every day at 6 PM."}
                   </p>
                 </div>
                 <button
                   onClick={() => refetchSuggestions(true)}
-                  className="bg-brand text-text-inverse hover:bg-brand-hover text-xs font-semibold px-4 py-2 rounded-lg cursor-pointer transition-colors border-0"
+                  disabled={suggestionsLoading}
+                  className="bg-brand text-text-inverse hover:bg-brand-hover text-xs font-semibold px-4 py-2 rounded-lg cursor-pointer transition-colors border-0 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Generate Suggestion Drafts 🚀
                 </button>

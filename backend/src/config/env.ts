@@ -22,6 +22,7 @@ interface EnvConfig {
   GITHUB_CALLBACK_URL: string;
   CLIENT_URL: string;
   OPENROUTER_API_KEY: string;
+  OPENROUTER_MODEL: string;
 }
 
 
@@ -46,4 +47,5 @@ export const ENV: EnvConfig = {
   GITHUB_CALLBACK_URL: process.env.GITHUB_CALLBACK_URL || "",
   CLIENT_URL: process.env.CLIENT_URL || "http://localhost:3000",
   OPENROUTER_API_KEY: process.env.OPENROUTER_API_KEY || "",
+  OPENROUTER_MODEL: process.env.OPENROUTER_MODEL || "google/gemini-2.5-flash:free",
 };
