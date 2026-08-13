@@ -9,8 +9,9 @@ import { AIRefinementChat } from "./AIRefinementChat"
 import { Dialog, DialogContent } from "@/components/ui/dialog"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { X, Copy, Check } from "lucide-react"
+import { X, Copy, Check, Loader2 } from "lucide-react"
 import { useTodaySuggestions } from "../hooks"
+import { saveFinalPostApi } from "../api/posts.api"
 
 export function PostEditorModal() {
   const dispatch = useDispatch()
@@ -25,6 +26,7 @@ export function PostEditorModal() {
   const [tags, setTags] = React.useState<string[]>([])
   const [newTag, setNewTag] = React.useState("")
   const [copied, setCopied] = React.useState(false)
+  const [isSaving, setIsSaving] = React.useState(false)
 
   React.useEffect(() => {
     if (currentPost) {
@@ -46,9 +48,21 @@ export function PostEditorModal() {
     }
   }
 
-  const handlePostComplete = () => {
-    toast({ title: "Posted! Great work 🎉", description: "Successfully updated post status.", type: "success" })
-    dispatch(closePostEditor())
+  const handlePostComplete = async () => {
+    setIsSaving(true)
+    try {
+      await saveFinalPostApi({
+        title: tags[0] || "Daily Post",
+        content: text,
+        suggestionId: selectedPostId || undefined,
+      })
+      toast({ title: "Posted! Great work 🎉", description: "Successfully updated post status.", type: "success" })
+      dispatch(closePostEditor())
+    } catch (err: any) {
+      toast({ title: "Failed to save post", description: err.message || "Something went wrong", type: "error" })
+    } finally {
+      setIsSaving(false)
+    }
   }
 
   const handleAddTag = (e: React.FormEvent) => {
@@ -151,9 +165,11 @@ export function PostEditorModal() {
             </Button>
             <Button
               onClick={handlePostComplete}
-              className="bg-success text-text-inverse hover:bg-success-muted text-xs font-semibold h-10 px-4 rounded-lg"
+              disabled={isSaving}
+              className="bg-success text-text-inverse hover:bg-success-muted text-xs font-semibold h-10 px-4 rounded-lg flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              ✅ I Posted It
+              {isSaving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : "✅"}
+              <span>{isSaving ? "Saving..." : "I Posted It"}</span>
             </Button>
           </div>
         </div>
