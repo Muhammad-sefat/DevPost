@@ -8,3 +8,12 @@ export interface ConnectionStatus {
   github: ConnectionInfo;
   wakatime: ConnectionInfo;
 }
+
+export interface NotificationSettings {
+  id: string;
+  userId: string;
+  email: string;
+  channel: string;
+  notifyTime: string;
+  telegramChatId: string | null;
+}

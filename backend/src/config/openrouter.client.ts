@@ -1,10 +1,13 @@
 import axios from "axios";
 import { ENV } from "./env";
 
+export interface LinkedInSuggestion {
+  title: string;
+  content: string;
+}
+
 export class OpenRouterClient {
-  async generateSuggestions(
-    prompt: string
-  ): Promise<Array<{ title: string; content: string }>> {
+  async generateSuggestions(prompt: string): Promise<LinkedInSuggestion[]> {
     if (!ENV.OPENROUTER_API_KEY) {
       throw new Error("OPENROUTER_API_KEY is not configured.");
     }
@@ -13,18 +16,63 @@ export class OpenRouterClient {
       const response = await axios.post(
         "https://openrouter.ai/api/v1/chat/completions",
         {
-          model: ENV.OPENROUTER_MODEL,
+          model: "openrouter/free",
+
           messages: [
             {
               role: "system",
-              content:
-                "You are a JSON generator. You must return only a valid JSON array of suggestions and nothing else. Do not wrap in markdown tags.",
+              content: `
+You are a professional LinkedIn content writer.
+
+Generate engaging, professional LinkedIn posts.
+
+Rules:
+- Write naturally.
+- Do not sound robotic.
+- Do not invent facts.
+- Keep posts suitable for LinkedIn.
+- Include a strong opening hook.
+- Use short paragraphs.
+- Use relevant hashtags.
+- Return only the requested structured data.
+              `.trim(),
             },
             {
               role: "user",
               content: prompt,
             },
           ],
+
+          response_format: {
+            type: "json_schema",
+            json_schema: {
+              name: "linkedin_suggestions",
+              strict: true,
+              schema: {
+                type: "object",
+                properties: {
+                  suggestions: {
+                    type: "array",
+                    items: {
+                      type: "object",
+                      properties: {
+                        title: {
+                          type: "string",
+                        },
+                        content: {
+                          type: "string",
+                        },
+                      },
+                      required: ["title", "content"],
+                      additionalProperties: false,
+                    },
+                  },
+                },
+                required: ["suggestions"],
+                additionalProperties: false,
+              },
+            },
+          },
         },
         {
           headers: {
@@ -33,33 +81,38 @@ export class OpenRouterClient {
             "HTTP-Referer": "https://devpost.app",
             "X-Title": "DevPost App",
           },
-        }
+        },
       );
 
-      const responseText = response.data?.choices?.[0]?.message?.content || "";
+      const content = response.data?.choices?.[0]?.message?.content;
 
-      // Clean up markdown block formatting if present
-      let cleanJson = responseText.trim();
-      if (cleanJson.startsWith("```json")) {
-        cleanJson = cleanJson.substring(7);
-      } else if (cleanJson.startsWith("```")) {
-        cleanJson = cleanJson.substring(3);
-      }
-      if (cleanJson.endsWith("```")) {
-        cleanJson = cleanJson.substring(0, cleanJson.length - 3);
+      if (!content) {
+        throw new Error("OpenRouter returned an empty response.");
       }
 
-      const suggestions = JSON.parse(cleanJson.trim());
-      if (!Array.isArray(suggestions) || suggestions.length === 0) {
-        throw new Error("OpenRouter returned an invalid or empty response.");
+      const parsed = JSON.parse(content);
+
+      if (
+        !parsed.suggestions ||
+        !Array.isArray(parsed.suggestions) ||
+        parsed.suggestions.length === 0
+      ) {
+        throw new Error(
+          "OpenRouter returned an invalid or empty suggestions response.",
+        );
       }
-      return suggestions;
+
+      return parsed.suggestions;
     } catch (error: any) {
-      console.error("OpenRouter API error:", error.response?.data || error.message);
+      console.error(
+        "OpenRouter API error:",
+        error.response?.data || error.message,
+      );
+
       throw new Error(
         error.response?.data?.error?.message ||
           error.message ||
-          "OpenRouter API error"
+          "OpenRouter API error",
       );
     }
   }

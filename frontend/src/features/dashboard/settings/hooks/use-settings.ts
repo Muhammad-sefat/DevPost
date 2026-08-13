@@ -3,17 +3,21 @@
 import { useEffect, useState, useCallback } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { ConnectionStatus } from "../types";
+import { ConnectionStatus, NotificationSettings } from "../types";
 import {
   getConnectionsApi,
   connectWakatimeApi,
   disconnectWakatimeApi,
   disconnectGithubApi,
+  getNotificationSettingsApi,
+  updateNotificationSettingsApi,
 } from "../api/settings.api";
 
 export function useSettings() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  
+  // Connections state
   const [connections, setConnections] = useState<ConnectionStatus | null>(null);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<{
@@ -22,6 +26,11 @@ export function useSettings() {
     wakatimeConnect?: boolean;
     wakatimeDisconnect?: boolean;
   }>({});
+
+  // Notifications state
+  const [notificationSettings, setNotificationSettings] = useState<NotificationSettings | null>(null);
+  const [notificationsLoading, setNotificationsLoading] = useState(true);
+  const [savingNotifications, setSavingNotifications] = useState(false);
 
   const fetchConnections = useCallback(async () => {
     try {
@@ -33,6 +42,20 @@ export function useSettings() {
       console.error("Failed to load connections status:", error);
     } finally {
       setLoading(false);
+    }
+  }, []);
+
+  const fetchNotificationSettings = useCallback(async () => {
+    setNotificationsLoading(true);
+    try {
+      const response = await getNotificationSettingsApi();
+      if (response.success && response.data) {
+        setNotificationSettings(response.data);
+      }
+    } catch (error: any) {
+      console.error("Failed to load notification settings:", error);
+    } finally {
+      setNotificationsLoading(false);
     }
   }, []);
 
@@ -52,7 +75,8 @@ export function useSettings() {
 
   useEffect(() => {
     fetchConnections();
-  }, [fetchConnections]);
+    fetchNotificationSettings();
+  }, [fetchConnections, fetchNotificationSettings]);
 
   useEffect(() => {
     handleRedirectParams();
@@ -121,6 +145,27 @@ export function useSettings() {
     }
   };
 
+  const updateNotificationSettings = async (settings: Partial<NotificationSettings>) => {
+    setSavingNotifications(true);
+    try {
+      const response = await updateNotificationSettingsApi(settings);
+      if (response.success && response.data) {
+        setNotificationSettings(response.data);
+        toast.success(response.message || "Notification settings updated successfully!");
+        return true;
+      } else {
+        toast.error(response.message || "Failed to update notification settings.");
+        return false;
+      }
+    } catch (error: any) {
+      const errMsg = error.response?.data?.message || error.message || "Failed to update notification settings.";
+      toast.error(errMsg);
+      return false;
+    } finally {
+      setSavingNotifications(false);
+    }
+  };
+
   return {
     connections,
     loading,
@@ -130,5 +175,12 @@ export function useSettings() {
     connectWakatime,
     disconnectWakatime,
     refetchConnections: fetchConnections,
+    
+    // Notifications exports
+    notificationSettings,
+    notificationsLoading,
+    savingNotifications,
+    updateNotificationSettings,
+    refetchNotificationSettings: fetchNotificationSettings,
   };
 }

@@ -59,6 +59,12 @@ export function SettingsContainer() {
     disconnectGithub,
     connectWakatime,
     disconnectWakatime,
+    
+    // Notifications fields from useSettings
+    notificationSettings,
+    notificationsLoading,
+    savingNotifications,
+    updateNotificationSettings,
   } = useSettings();
 
   // Profile state
@@ -73,6 +79,8 @@ export function SettingsContainer() {
     user?.email || "example@example.com",
   );
   const [notifyTime, setNotifyTime] = React.useState("20:00");
+  const [telegramChatId, setTelegramChatId] = React.useState("");
+  const [channel, setChannel] = React.useState("email");
 
   // Confirm dialog state
   const [confirmOpen, setConfirmOpen] = React.useState(false);
@@ -82,19 +90,31 @@ export function SettingsContainer() {
 
   React.useEffect(() => {
     if (user?.name) setName(user.name);
-    if (user?.email) setNotifyEmail(user.email);
-  }, [user]);
+    if (user?.email && !notificationSettings) setNotifyEmail(user.email);
+  }, [user, notificationSettings]);
+
+  React.useEffect(() => {
+    if (notificationSettings) {
+      if (notificationSettings.email) setNotifyEmail(notificationSettings.email);
+      if (notificationSettings.notifyTime) setNotifyTime(notificationSettings.notifyTime);
+      if (notificationSettings.telegramChatId) setTelegramChatId(notificationSettings.telegramChatId);
+      if (notificationSettings.channel) setChannel(notificationSettings.channel);
+    }
+  }, [notificationSettings]);
 
   const handleProfileSave = (e: React.FormEvent) => {
     e.preventDefault();
     toast.success("Profile updated! Changes saved successfully.");
   };
 
-  const handleNotificationSave = (e: React.FormEvent) => {
+  const handleNotificationSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    toast.success(
-      `Notifications saved! Daily emails scheduled at ${notifyTime}.`,
-    );
+    await updateNotificationSettings({
+      email: notifyEmail,
+      notifyTime,
+      telegramChatId: telegramChatId || "",
+      channel,
+    });
   };
 
   const triggerConfirm = (type: "history" | "account") => {
@@ -362,7 +382,7 @@ export function SettingsContainer() {
               )}
             </div>
 
-            {/* Email Notifications row */}
+            {/* Notifications Alert Schedule row */}
             <form onSubmit={handleNotificationSave} className="space-y-4">
               <div className="flex gap-3">
                 <div className="p-2.5 bg-bg-elevated border border-border rounded-lg text-brand h-fit">
@@ -373,48 +393,88 @@ export function SettingsContainer() {
                     Alert Schedule
                   </h4>
                   <p className="text-[10px] text-text-secondary mt-0.5">
-                    We will email you as soon as your daily post suggestions are
-                    ready.
+                    Configure your preferences and get notified as soon as your daily post suggestions are ready.
                   </p>
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <label className="text-xs font-semibold text-text-secondary">
-                    Notification Email
-                  </label>
-                  <Input
-                    type="email"
-                    value={notifyEmail}
-                    onChange={(e) => setNotifyEmail(e.target.value)}
-                    className="bg-bg-input border-border text-text-primary text-xs h-10 rounded-lg"
-                  />
+              {notificationsLoading ? (
+                <div className="flex items-center gap-2 text-xs text-text-muted py-4 justify-center">
+                  <Loader2 className="h-4 w-4 animate-spin text-brand" />
+                  <span>Loading settings...</span>
                 </div>
-                <div className="space-y-1">
-                  <label className="text-xs font-semibold text-text-secondary">
-                    Delivery Time (UTC)
-                  </label>
-                  <Select value={notifyTime} onValueChange={setNotifyTime}>
-                    <SelectTrigger className="bg-bg-input border-border text-text-primary text-xs h-10 rounded-lg font-mono w-full cursor-pointer">
-                      <SelectValue placeholder="Select delivery time" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-bg-surface border-border text-text-primary max-h-60 overflow-y-auto">
-                      {timeOptions.map((option) => (
-                        <SelectItem key={option.value} value={option.value} className="font-mono">
-                          {option.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <label className="text-xs font-semibold text-text-secondary">
+                      Notification Email
+                    </label>
+                    <Input
+                      type="email"
+                      value={notifyEmail}
+                      onChange={(e) => setNotifyEmail(e.target.value)}
+                      className="bg-bg-input border-border text-text-primary text-xs h-10 rounded-lg"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs font-semibold text-text-secondary">
+                      Delivery Time (UTC)
+                    </label>
+                    <Select value={notifyTime} onValueChange={setNotifyTime}>
+                      <SelectTrigger className="bg-bg-input border-border text-text-primary text-xs h-10 rounded-lg font-mono w-full cursor-pointer">
+                        <SelectValue placeholder="Select delivery time" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-bg-surface border-border text-text-primary max-h-60 overflow-y-auto">
+                        {timeOptions.map((option) => (
+                          <SelectItem key={option.value} value={option.value} className="font-mono">
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div className="space-y-1">
+                    <label className="text-xs font-semibold text-text-secondary">
+                      Telegram Chat ID
+                    </label>
+                    <Input
+                      type="text"
+                      placeholder="e.g. 123456789"
+                      value={telegramChatId}
+                      onChange={(e) => setTelegramChatId(e.target.value)}
+                      className="bg-bg-input border-border text-text-primary text-xs h-10 rounded-lg"
+                    />
+                    <p className="text-[9px] text-text-muted mt-0.5 leading-normal">
+                      Send <code>/start</code> to your bot to find your Chat ID.
+                    </p>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-xs font-semibold text-text-secondary">
+                      Notification Channel
+                    </label>
+                    <Select value={channel} onValueChange={setChannel}>
+                      <SelectTrigger className="bg-bg-input border-border text-text-primary text-xs h-10 rounded-lg w-full cursor-pointer">
+                        <SelectValue placeholder="Select notification channel" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-bg-surface border-border text-text-primary">
+                        <SelectItem value="email">Email Only</SelectItem>
+                        <SelectItem value="telegram">Telegram Only</SelectItem>
+                        <SelectItem value="both">Both (Email & Telegram)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
-              </div>
+              )}
 
               <Button
                 type="submit"
-                className="bg-brand text-text-inverse hover:bg-brand-hover text-xs font-semibold h-10 px-4 rounded-lg cursor-pointer"
+                disabled={savingNotifications || notificationsLoading}
+                className="bg-brand text-text-inverse hover:bg-brand-hover text-xs font-semibold h-10 px-4 rounded-lg cursor-pointer flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Save notification settings
+                {savingNotifications && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                <span>{savingNotifications ? "Saving settings..." : "Save notification settings"}</span>
               </Button>
             </form>
           </CardContent>
