@@ -7,7 +7,10 @@ import { suggestionsRoutes } from "@/modules/suggestions/suggestions.routes";
 import { notificationsRoutes } from "@/modules/notifications/notifications.routes";
 import { postsRoutes } from "@/modules/posts/posts.routes";
 import { automationRoutes } from "@/modules/automation/automation.routes";
+<<<<<<< HEAD
 import { subscriptionRoutes } from "@/modules/subscription/subscription.routes";
+=======
+>>>>>>> 5f1f2504785ca8eade817d8a53db798e778f8ed1
 
 const router = Router();
 
@@ -19,6 +22,9 @@ router.use("/suggestions", suggestionsRoutes);
 router.use("/notifications", notificationsRoutes);
 router.use("/posts", postsRoutes);
 router.use("/automation", automationRoutes);
+<<<<<<< HEAD
 router.use("/subscriptions", subscriptionRoutes);
+=======
+>>>>>>> 5f1f2504785ca8eade817d8a53db798e778f8ed1
 
 export const routes = router;
