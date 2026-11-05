@@ -14,7 +14,14 @@ app.use(cors({
   credentials: true,
 }));
 app.use(helmet());
-app.use(express.json());
+app.use(
+  express.json({
+    // Capture raw body buffer for Stripe webhook signature verification
+    verify: (req: any, _res, buf) => {
+      req.rawBody = buf;
+    },
+  })
+);
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 if (ENV.NODE_ENV === "development") app.use(morgan("dev"));

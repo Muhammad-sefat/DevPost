@@ -7,6 +7,7 @@ import { suggestionsRoutes } from "@/modules/suggestions/suggestions.routes";
 import { notificationsRoutes } from "@/modules/notifications/notifications.routes";
 import { postsRoutes } from "@/modules/posts/posts.routes";
 import { automationRoutes } from "@/modules/automation/automation.routes";
+import { subscriptionRoutes } from "@/modules/subscription/subscription.routes";
 
 const router = Router();
 
@@ -18,5 +19,6 @@ router.use("/suggestions", suggestionsRoutes);
 router.use("/notifications", notificationsRoutes);
 router.use("/posts", postsRoutes);
 router.use("/automation", automationRoutes);
+router.use("/subscriptions", subscriptionRoutes);
 
 export const routes = router;

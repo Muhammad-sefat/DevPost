@@ -3,8 +3,23 @@ import { app } from "./app";
 import { ENV } from "./config/env";
 import { startDailySuggestionJob } from "./jobs/daily-suggestion.job";
 
+async function connectWithRetry(retries = 5, delayMs = 3000) {
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    try {
+      await prisma.$connect();
+      return;
+    } catch (err: any) {
+      if (attempt === retries) throw err;
+      console.warn(
+        `⏳ Database connection attempt ${attempt}/${retries} failed. Retrying in ${delayMs / 1000}s... (Neon database may be waking up from sleep)`
+      );
+      await new Promise((resolve) => setTimeout(resolve, delayMs));
+    }
+  }
+}
+
 async function startServer() {
-  await prisma.$connect();
+  await connectWithRetry();
   console.log("✅ Database connected");
   startDailySuggestionJob();
   console.log("⏰ Daily 6 PM suggestion job scheduled");

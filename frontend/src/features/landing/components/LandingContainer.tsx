@@ -2,10 +2,11 @@
 
 import * as React from "react"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import gsap from "gsap"
-import { Sparkles, Terminal, Code, Cpu, ChevronRight, Github } from "lucide-react"
+import { Sparkles, Terminal, Code, Cpu, ChevronRight, Github, Check, Loader2, CheckCircle2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { toast } from "sonner"
 
 import { useAuth } from "@/hooks/use-auth"
 import {
@@ -17,14 +18,171 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 import { User as UserIcon, LayoutDashboard, LogOut } from "lucide-react"
+import {
+  getPlansApi,
+  createCheckoutSessionApi,
+  verifySessionApi,
+  getMySubscriptionApi,
+  PlanItem,
+} from "../api/subscription.api"
+
+// Static plans data for frontend presentation & offline fallback
+const PLANS: PlanItem[] = [
+  {
+    id: "basic",
+    name: "Basic",
+    priceFormatted: "$10",
+    priceInCents: 1000,
+    currency: "usd",
+    interval: "month",
+    description: "Great for individual developers starting to document their shipping journey.",
+    buttonText: "Get Started",
+    popular: false,
+    features: [
+      "1 GitHub account integration",
+      "Daily commit & activity tracking",
+      "Up to 30 AI post drafts / month",
+      "Basic WakaTime metrics sync",
+      "Standard Claude AI generation",
+      "Community support",
+    ],
+  },
+  {
+    id: "growth",
+    name: "Growth",
+    priceFormatted: "$20",
+    priceInCents: 2000,
+    currency: "usd",
+    interval: "month",
+    description: "Perfect for active builders who ship code and post on LinkedIn regularly.",
+    buttonText: "Start Growth",
+    popular: true,
+    features: [
+      "3 GitHub accounts integration",
+      "Full WakaTime language breakdown",
+      "Unlimited AI post drafts",
+      "AI contextual editor refinement",
+      "RAG memory (learns your writing style)",
+      "Priority generation queue",
+      "Standard email support",
+    ],
+  },
+  {
+    id: "pro",
+    name: "Pro",
+    priceFormatted: "$30",
+    priceInCents: 3000,
+    currency: "usd",
+    interval: "month",
+    description: "For prolific creators, tech leads, and open-source advocates.",
+    buttonText: "Go Pro",
+    popular: false,
+    features: [
+      "Unlimited GitHub accounts & repos",
+      "Advanced coding analytics & graphs",
+      "Unlimited post generation & refinement",
+      "Custom tone & brand voice tuning",
+      "Multi-platform format export (LinkedIn, X)",
+      "Early access to new features",
+      "1-on-1 priority support",
+    ],
+  },
+]
 
 export function LandingContainer() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const { user, isAuthenticated, logout, fetchCurrentUser } = useAuth()
+  
+  const [plans, setPlans] = React.useState<PlanItem[]>(PLANS)
+  const [activePlanId, setActivePlanId] = React.useState<string | null>(null)
+  const [isCheckingOut, setIsCheckingOut] = React.useState<string | null>(null)
+
   const heroRef = React.useRef<HTMLDivElement>(null)
   const stepsRef = React.useRef<HTMLDivElement>(null)
   const featuresRef = React.useRef<HTMLDivElement>(null)
   const showcaseRef = React.useRef<HTMLDivElement>(null)
+  const plansRef = React.useRef<HTMLDivElement>(null)
+
+  // 1. Fetch plans from backend if available
+  React.useEffect(() => {
+    getPlansApi()
+      .then((res) => {
+        if (res.data && res.data.length > 0) {
+          setPlans(res.data)
+        }
+      })
+      .catch(() => {
+        // Fallback silently to static PLANS
+      })
+  }, [])
+
+  // 2. Fetch current user subscription if logged in
+  React.useEffect(() => {
+    if (isAuthenticated) {
+      getMySubscriptionApi()
+        .then((res) => {
+          if (res.data?.hasActivePlan && res.data.planId) {
+            setActivePlanId(res.data.planId)
+          }
+        })
+        .catch(() => {})
+    }
+  }, [isAuthenticated])
+
+  // 3. Handle return redirect from Stripe Checkout
+  React.useEffect(() => {
+    const paymentSuccess = searchParams.get("payment_success")
+    const sessionId = searchParams.get("session_id")
+    const planParam = searchParams.get("plan")
+    const paymentCancelled = searchParams.get("payment_cancelled")
+
+    if (paymentSuccess === "true" && sessionId) {
+      verifySessionApi(sessionId)
+        .then((res) => {
+          const paidPlan = res.data?.planId || planParam
+          if (paidPlan) {
+            setActivePlanId(paidPlan)
+            toast.success(`Payment successful! You are now subscribed to the ${paidPlan.toUpperCase()} plan.`)
+          }
+        })
+        .catch(() => {
+          if (planParam) {
+            setActivePlanId(planParam)
+          }
+          toast.success("Payment completed successfully!")
+        })
+        .finally(() => {
+          router.replace("/welcome", { scroll: false })
+        })
+    } else if (paymentCancelled === "true") {
+      toast.info("Checkout was cancelled.")
+      router.replace("/welcome", { scroll: false })
+    }
+  }, [searchParams, router])
+
+  const handleBuyPlan = async (planId: "basic" | "growth" | "pro") => {
+    if (!isAuthenticated) {
+      toast.info("Please sign in or create an account to subscribe.")
+      router.push("/signin")
+      return
+    }
+
+    try {
+      setIsCheckingOut(planId)
+      const res = await createCheckoutSessionApi(planId)
+      if (res.data?.url) {
+        window.location.href = res.data.url
+      } else {
+        toast.error("Failed to generate Stripe checkout link")
+        setIsCheckingOut(null)
+      }
+    } catch (err: any) {
+      const msg = err.response?.data?.message || err.message || "Failed to start checkout session"
+      toast.error(msg)
+      setIsCheckingOut(null)
+    }
+  }
 
   React.useEffect(() => {
     fetchCurrentUser()
@@ -68,6 +226,17 @@ export function LandingContainer() {
         opacity: 0,
         stagger: 0.15,
         duration: 0.6,
+        ease: "power2.out"
+      })
+      gsap.from(".plan-card", {
+        scrollTrigger: {
+          trigger: plansRef.current,
+          start: "top 80%",
+        },
+        y: 30,
+        opacity: 0,
+        stagger: 0.12,
+        duration: 0.5,
         ease: "power2.out"
       })
     })
@@ -257,7 +426,112 @@ export function LandingContainer() {
         </div>
       </section>
 
-      {/* Section 5: Footer */}
+      {/* Section 5: Pricing Plans */}
+      <section ref={plansRef} className="px-6 md:px-12 py-20 border-t border-border bg-bg-surface/20 relative z-10">
+        <div className="max-w-5xl mx-auto">
+          <div className="text-center mb-14">
+            <span className="font-mono text-[10px] md:text-xs font-bold tracking-widest text-brand uppercase mb-3 bg-brand/10 px-3 py-1 rounded-full border border-brand/20 inline-block">
+              PLANS &amp; PRICING
+            </span>
+            <h2 className="font-display font-bold text-2xl md:text-3xl text-text-primary mb-3">
+              Simple, developer-first pricing
+            </h2>
+            <p className="text-xs md:text-sm text-text-secondary max-w-lg mx-auto leading-relaxed">
+              Invest in your public engineering presence. Select the plan that fits your shipping frequency.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch">
+            {plans.map((plan) => {
+              const isCurrentPlan = activePlanId === plan.id
+              const isThisLoading = isCheckingOut === plan.id
+
+              return (
+                <div
+                  key={plan.id}
+                  className={`plan-card rounded-xl p-6 flex flex-col justify-between relative transition-all duration-200 ${
+                    isCurrentPlan
+                      ? "bg-bg-surface border-2 border-success shadow-xl shadow-success/10"
+                      : plan.popular
+                      ? "bg-bg-surface border-2 border-brand shadow-xl shadow-brand/10"
+                      : "bg-bg-surface border border-border hover:border-border-strong"
+                  }`}
+                >
+                  {isCurrentPlan ? (
+                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-success text-text-inverse font-mono font-bold text-[10px] uppercase px-3 py-0.5 rounded-full shadow-sm tracking-wider flex items-center gap-1">
+                      <CheckCircle2 className="h-3 w-3" />
+                      Active Plan
+                    </div>
+                  ) : plan.popular ? (
+                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-brand text-text-inverse font-mono font-bold text-[10px] uppercase px-3 py-0.5 rounded-full shadow-sm tracking-wider">
+                      Most Popular
+                    </div>
+                  ) : null}
+
+                  <div>
+                    <div className="mb-4">
+                      <h3 className="font-display font-bold text-lg text-text-primary mb-1">
+                        {plan.name}
+                      </h3>
+                      <p className="text-xs text-text-secondary leading-relaxed min-h-[32px]">
+                        {plan.description}
+                      </p>
+                    </div>
+
+                    <div className="flex items-baseline gap-1 my-6 pb-6 border-b border-border">
+                      <span className="font-display text-4xl font-extrabold text-text-primary">
+                        {plan.priceFormatted}
+                      </span>
+                      <span className="text-xs text-text-secondary font-mono">
+                        / {plan.interval}
+                      </span>
+                    </div>
+
+                    <ul className="space-y-3 mb-8">
+                      {plan.features.map((feature, idx) => (
+                        <li key={idx} className="flex items-start gap-2.5 text-xs text-text-secondary">
+                          <Check className="h-4 w-4 text-brand shrink-0 mt-0.5" />
+                          <span className="leading-tight">{feature}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  <div className="w-full mt-auto">
+                    <Button
+                      onClick={() => handleBuyPlan(plan.id)}
+                      disabled={isCurrentPlan || !!isCheckingOut}
+                      className={`w-full font-semibold text-xs py-2.5 rounded-lg transition-all flex items-center justify-center gap-2 ${
+                        isCurrentPlan
+                          ? "bg-success/20 text-success border border-success/40 cursor-default"
+                          : plan.popular
+                          ? "bg-brand text-text-inverse hover:bg-brand-hover cursor-pointer"
+                          : "bg-bg-elevated hover:bg-bg-input text-text-primary border border-border hover:border-brand/40 cursor-pointer"
+                      }`}
+                    >
+                      {isThisLoading ? (
+                        <>
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          <span>Redirecting to Stripe...</span>
+                        </>
+                      ) : isCurrentPlan ? (
+                        <>
+                          <CheckCircle2 className="h-3.5 w-3.5 text-success" />
+                          <span>Paid</span>
+                        </>
+                      ) : (
+                        plan.buttonText || (plan.popular ? "Start Growth" : "Get Started")
+                      )}
+                    </Button>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* Section 6: Footer */}
       <footer className="mt-auto px-6 pt-12 border-t border-border text-center text-xs text-gray-400">
         <p className="mb-2">Built by a developer, for developers.</p>
         <p className="font-mono text-[10px]">&copy; {new Date().getFullYear()} DevPost. All rights reserved.</p>

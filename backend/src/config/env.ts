@@ -23,6 +23,9 @@ interface EnvConfig {
   CLIENT_URL: string;
   OPENROUTER_API_KEY: string;
   OPENROUTER_MODEL: string;
+  STRIPE_SECRET_KEY: string;
+  STRIPE_PUBLISHABLE_KEY: string;
+  STRIPE_WEBHOOK_SECRET: string;
 }
 
 
@@ -48,4 +51,7 @@ export const ENV: EnvConfig = {
   CLIENT_URL: process.env.CLIENT_URL || "http://localhost:3000",
   OPENROUTER_API_KEY: process.env.OPENROUTER_API_KEY || "",
   OPENROUTER_MODEL: process.env.OPENROUTER_MODEL || "google/gemini-2.5-flash:free",
+  STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY || "sk_test_placeholder",
+  STRIPE_PUBLISHABLE_KEY: process.env.STRIPE_PUBLISHABLE_KEY || "pk_test_placeholder",
+  STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET || "whsec_placeholder",
 };

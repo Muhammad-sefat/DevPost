@@ -23,8 +23,7 @@ import { emailVerificationTemplate } from "@/templates/email-verification";
 import { forgotPasswordTemplate } from "@/templates/forgot-password";
 import { ENV } from "@/config/env";
 import { googleClient } from "@/utils/google";
-import { Role } from "@prisma/client";
-import { Provider } from "@prisma/client";
+import { Role, Provider } from "@/generated/client";
 
 import axios from "axios";
 

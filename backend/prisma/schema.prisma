@@ -40,6 +40,7 @@ model User {
   posts              Post[]
   apiUsageLogs       ApiUsageLog[]
   notificationSettings NotificationSetting[]
+  subscription       Subscription?
 }
 
 model EmailVerificationToken {
@@ -189,4 +190,32 @@ model NotificationSetting {
   telegramChatId String?
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
+}
+
+enum SubscriptionPlan {
+  FREE
+  BASIC
+  GROWTH
+  PRO
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  CANCELED
+  PAST_DUE
+  INCOMPLETE
+}
+
+model Subscription {
+  id                   String             @id @default(uuid())
+  userId               String             @unique
+  user                 User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  plan                 SubscriptionPlan   @default(FREE)
+  status               SubscriptionStatus @default(ACTIVE)
+  stripeCustomerId     String?
+  stripeSubscriptionId String?
+  stripeSessionId      String?
+  currentPeriodEnd     DateTime?
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
 }
